@@ -1,0 +1,219 @@
+from __future__ import annotations
+
+from django.conf import settings
+from django.db import migrations, models
+import django.db.models.deletion
+import django.utils.timezone
+
+
+class Migration(migrations.Migration):
+    initial = True
+
+    dependencies = [
+        ("accounts", "0001_initial"),
+    ]
+
+    operations = [
+        migrations.CreateModel(
+            name="Department",
+            fields=[
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("name", models.CharField(max_length=150, unique=True)),
+                ("email", models.EmailField(max_length=254)),
+                ("phone", models.CharField(max_length=20)),
+                ("description", models.TextField(blank=True)),
+                ("created_at", models.DateTimeField(default=django.utils.timezone.now)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+            ],
+            options={"ordering": ("name",)},
+        ),
+        migrations.CreateModel(
+            name="Tag",
+            fields=[
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("name", models.CharField(max_length=100, unique=True)),
+                ("slug", models.SlugField(unique=True)),
+                ("created_at", models.DateTimeField(default=django.utils.timezone.now)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+            ],
+            options={"ordering": ("name",)},
+        ),
+        migrations.CreateModel(
+            name="Category",
+            fields=[
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("name", models.CharField(max_length=150, unique=True)),
+                ("slug", models.SlugField(unique=True)),
+                ("description", models.TextField(blank=True)),
+                ("created_at", models.DateTimeField(default=django.utils.timezone.now)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "department",
+                    models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name="categories", to="core_reports.department"),
+                ),
+            ],
+            options={"ordering": ("name",)},
+        ),
+        migrations.CreateModel(
+            name="Report",
+            fields=[
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("title", models.CharField(max_length=200)),
+                ("description", models.TextField()),
+                (
+                    "priority",
+                    models.CharField(
+                        choices=[("BAIXA", "Baixa"), ("MEDIA", "Média"), ("ALTA", "Alta")],
+                        default="MEDIA",
+                        max_length=12,
+                    ),
+                ),
+                ("address", models.CharField(max_length=255)),
+                ("neighborhood", models.CharField(max_length=150)),
+                ("latitude", models.DecimalField(decimal_places=6, max_digits=9)),
+                ("longitude", models.DecimalField(decimal_places=6, max_digits=9)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("ABERTO", "Aberto"),
+                            ("ANALISANDO", "Analisando"),
+                            ("DEFERIDO", "Deferido"),
+                            ("INDEFERIDO", "Indeferido"),
+                            ("EM_ANDAMENTO", "Em andamento"),
+                            ("CONCLUIDO", "Concluído"),
+                            ("IGNORADO", "Ignorado"),
+                        ],
+                        default="ABERTO",
+                        max_length=20,
+                    ),
+                ),
+                ("denied_reason", models.TextField(blank=True)),
+                ("last_status_at", models.DateTimeField(default=django.utils.timezone.now)),
+                ("created_at", models.DateTimeField(default=django.utils.timezone.now)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "category",
+                    models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name="reports", to="core_reports.category"),
+                ),
+                (
+                    "citizen",
+                    models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name="reports", to="accounts.citizen"),
+                ),
+                (
+                    "department",
+                    models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name="reports", to="core_reports.department"),
+                ),
+            ],
+            options={"ordering": ("-created_at",)},
+        ),
+        migrations.CreateModel(
+            name="ReportTag",
+            fields=[
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "report",
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="core_reports.report"),
+                ),
+                ("tag", models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to="core_reports.tag")),
+            ],
+        ),
+        migrations.CreateModel(
+            name="Attachment",
+            fields=[
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("file", models.FileField(upload_to="reports/attachments/")),
+                ("description", models.CharField(blank=True, max_length=255)),
+                ("created_at", models.DateTimeField(default=django.utils.timezone.now)),
+                (
+                    "report",
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="attachments", to="core_reports.report"),
+                ),
+            ],
+            options={"ordering": ("created_at",)},
+        ),
+        migrations.CreateModel(
+            name="Comment",
+            fields=[
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                ("message", models.TextField()),
+                ("created_at", models.DateTimeField(default=django.utils.timezone.now)),
+                (
+                    "citizen",
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="comments", to="accounts.citizen"),
+                ),
+                (
+                    "report",
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="comments", to="core_reports.report"),
+                ),
+            ],
+            options={"ordering": ("created_at",)},
+        ),
+        migrations.CreateModel(
+            name="StatusHistory",
+            fields=[
+                ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
+                (
+                    "previous_status",
+                    models.CharField(
+                        choices=[
+                            ("ABERTO", "Aberto"),
+                            ("ANALISANDO", "Analisando"),
+                            ("DEFERIDO", "Deferido"),
+                            ("INDEFERIDO", "Indeferido"),
+                            ("EM_ANDAMENTO", "Em andamento"),
+                            ("CONCLUIDO", "Concluído"),
+                            ("IGNORADO", "Ignorado"),
+                        ],
+                        max_length=20,
+                    ),
+                ),
+                (
+                    "new_status",
+                    models.CharField(
+                        choices=[
+                            ("ABERTO", "Aberto"),
+                            ("ANALISANDO", "Analisando"),
+                            ("DEFERIDO", "Deferido"),
+                            ("INDEFERIDO", "Indeferido"),
+                            ("EM_ANDAMENTO", "Em andamento"),
+                            ("CONCLUIDO", "Concluído"),
+                            ("IGNORADO", "Ignorado"),
+                        ],
+                        max_length=20,
+                    ),
+                ),
+                ("notes", models.TextField(blank=True)),
+                ("created_at", models.DateTimeField(default=django.utils.timezone.now)),
+                (
+                    "changed_by",
+                    models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name="status_changes", to="accounts.administrator"),
+                ),
+                (
+                    "report",
+                    models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name="status_history", to="core_reports.report"),
+                ),
+            ],
+            options={"ordering": ("-created_at",)},
+        ),
+        migrations.AddField(
+            model_name="report",
+            name="tags",
+            field=models.ManyToManyField(through="core_reports.ReportTag", related_name="reports", to="core_reports.tag"),
+        ),
+        migrations.AddConstraint(
+            model_name="report",
+            constraint=models.CheckConstraint(
+                check=models.Q(latitude__gte=-90) & models.Q(latitude__lte=90),
+                name="check_latitude_range",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="report",
+            constraint=models.CheckConstraint(
+                check=models.Q(longitude__gte=-180) & models.Q(longitude__lte=180),
+                name="check_longitude_range",
+            ),
+        ),
+        migrations.AlterUniqueTogether(name="reporttag", unique_together={("report", "tag")}),
+    ]

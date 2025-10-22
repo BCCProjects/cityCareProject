@@ -1,0 +1,223 @@
+{
+  "info": {
+    "name": "City Care API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Citizen Register",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "application/json"},
+          {"key": "X_USER", "value": "{{api_user}}"},
+          {"key": "X_APP", "value": "{{api_app}}"},
+          {"key": "X_SIGNATURE", "value": "{{api_signature}}"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"cidadão@example.com\",\n  \"full_name\": \"Fulano da Silva\",\n  \"phone\": \"11999999999\",\n  \"password\": \"senhaSegura123\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/citizens/register",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "citizens", "register"]
+        }
+      }
+    },
+    {
+      "name": "Citizen Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "application/json"},
+          {"key": "X_USER", "value": "{{api_user}}"},
+          {"key": "X_APP", "value": "{{api_app}}"},
+          {"key": "X_SIGNATURE", "value": "{{api_signature}}"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"cidadão@example.com\",\n  \"password\": \"senhaSegura123\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/citizens/token",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "citizens", "token"]
+        }
+      }
+    },
+    {
+      "name": "Admin Register",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "application/json"},
+          {"key": "X_USER", "value": "{{api_user}}"},
+          {"key": "X_APP", "value": "{{api_app}}"},
+          {"key": "X_SIGNATURE", "value": "{{api_signature}}"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"admin@example.com\",\n  \"first_name\": \"Admin\",\n  \"last_name\": \"City\",\n  \"password\": \"senhaSegura123\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/auth/admins/register",
+          "host": ["{{base_url}}"],
+          "path": ["api", "auth", "admins", "register"]
+        }
+      }
+    },
+    {
+      "name": "List Categories",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/categories/",
+          "host": ["{{base_url}}"],
+          "path": ["api", "categories", ""]
+        }
+      }
+    },
+    {
+      "name": "List Tags",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/tags/",
+          "host": ["{{base_url}}"],
+          "path": ["api", "tags", ""]
+        }
+      }
+    },
+    {
+      "name": "Create Report",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"},
+          {"key": "Content-Type", "value": "multipart/form-data"}
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {"key": "category_id", "value": "1"},
+            {"key": "title", "value": "Buraco perigoso na avenida"},
+            {"key": "description", "value": "Existe um buraco profundo no asfalto."},
+            {"key": "priority", "value": "ALTA"},
+            {"key": "address", "value": "Rua Central, 100"},
+            {"key": "neighborhood", "value": "Centro"},
+            {"key": "latitude", "value": "-23.550520"},
+            {"key": "longitude", "value": "-46.633308"},
+            {"key": "tags", "value": "1"}
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/reports/",
+          "host": ["{{base_url}}"],
+          "path": ["api", "reports", ""]
+        }
+      }
+    },
+    {
+      "name": "List Reports",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/reports/?status=ABERTO",
+          "host": ["{{base_url}}"],
+          "path": ["api", "reports", ""],
+          "query": [
+            {"key": "status", "value": "ABERTO", "description": "Filtro opcional por status"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "Report Detail",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/reports/{{report_id}}/",
+          "host": ["{{base_url}}"],
+          "path": ["api", "reports", "{{report_id}}", ""]
+        }
+      }
+    },
+    {
+      "name": "Add Comment",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"},
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"message\": \"Preciso de atualização\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/reports/{{report_id}}/comments/",
+          "host": ["{{base_url}}"],
+          "path": ["api", "reports", "{{report_id}}", "comments", ""]
+        }
+      }
+    },
+    {
+      "name": "Eligible for Ignore",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/reports/eligibles-ignore?hours=168",
+          "host": ["{{base_url}}"],
+          "path": ["api", "reports", "eligibles-ignore"],
+          "query": [
+            {"key": "hours", "value": "168"}
+          ]
+        }
+      }
+    },
+    {
+      "name": "Average Resolution",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/reports/avg-resolution/",
+          "host": ["{{base_url}}"],
+          "path": ["api", "reports", "avg-resolution", ""]
+        }
+      }
+    },
+    {
+      "name": "Dashboard Overview",
+      "request": {
+        "method": "GET",
+        "header": [
+          {"key": "Authorization", "value": "Bearer {{access_token}}"}
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/dashboard/",
+          "host": ["{{base_url}}"],
+          "path": ["api", "dashboard", ""]
+        }
+      }
+    }
+  ]
+}
