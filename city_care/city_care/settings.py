@@ -35,6 +35,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "rest_framework_simplejwt",
+    "storages",
     "accounts",
     "core.reports",
 ]
@@ -139,3 +140,20 @@ SIMPLE_JWT = {
 API_SECURITY_USER = os.getenv("API_SECURITY_USER", "local_user")
 API_SECURITY_APP = os.getenv("API_SECURITY_APP", "local_app")
 API_SECURITY_SIGNATURE = os.getenv("API_SECURITY_SIGNATURE", "local_signature")
+
+# Supabase S3-compatible storage (used by attachments)
+USE_SUPABASE_ATTACHMENTS = os.getenv("SUPABASE_STORAGE_ENABLED", "1") == "1"
+AWS_ACCESS_KEY_ID = os.getenv("SUPABASE_ACCESS_KEY_ID", "")
+AWS_SECRET_ACCESS_KEY = os.getenv("SUPABASE_SECRET_ACCESS_KEY", "")
+AWS_STORAGE_BUCKET_NAME = os.getenv("SUPABASE_BUCKET_NAME", "")
+AWS_S3_ENDPOINT_URL = os.getenv("SUPABASE_S3_ENDPOINT_URL", "")
+AWS_S3_SIGNATURE_VERSION = os.getenv("SUPABASE_S3_SIGNATURE_VERSION", "s3v4")
+AWS_S3_ADDRESSING_STYLE = os.getenv("SUPABASE_S3_ADDRESSING_STYLE", "path")
+AWS_S3_REGION_NAME = os.getenv("SUPABASE_S3_REGION", "us-east-1")
+AWS_QUERYSTRING_AUTH = False  # do not append signed query params to public URLs
+
+# For public access via Supabase object API (bucket must be public)
+_supabase_project_url = os.getenv("SUPABASE_PROJECT_URL", "").rstrip("/")
+if _supabase_project_url and AWS_STORAGE_BUCKET_NAME:
+    AWS_S3_CUSTOM_DOMAIN = f"{_supabase_project_url.replace('https://', '').replace('http://', '')}/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}"
+    AWS_S3_URL_PROTOCOL = "https:"

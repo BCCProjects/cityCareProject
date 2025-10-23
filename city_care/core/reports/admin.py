@@ -14,12 +14,14 @@ class CategoryAdmin(admin.ModelAdmin):
     list_display = ("name", "department", "slug", "created_at")
     search_fields = ("name", "slug")
     list_filter = ("department",)
+    prepopulated_fields = {"slug": ("name",)}
 
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     list_display = ("name", "slug")
     search_fields = ("name", "slug")
+    prepopulated_fields = {"slug": ("name",)}
 
 
 class AttachmentInline(admin.TabularInline):

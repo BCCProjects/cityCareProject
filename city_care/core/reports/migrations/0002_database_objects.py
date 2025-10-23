@@ -26,7 +26,7 @@ def drop_function(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("core.reports", "0001_initial"),
+        ("core_reports", "0001_initial"),
     ]
 
     operations = [

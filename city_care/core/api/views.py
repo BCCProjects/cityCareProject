@@ -2,35 +2,114 @@ from __future__ import annotations
 
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 
 from accounts.models import Citizen
 from core.api.serializers import (
     CategorySerializer,
+    CategoryCreateSerializer,
     CommentCreateSerializer,
     CommentSerializer,
+    DepartmentSerializer,
     ReportCreateSerializer,
     ReportDetailSerializer,
     ReportListSerializer,
     TagSerializer,
 )
 from core.repositories import report_repository
-from core.reports.models import Category, Report, ReportStatus, Tag
+from core.reports.models import Category, Department, Report, ReportStatus, Tag
+from core.api.authentication import AdminJWTAuthentication, CitizenJWTAuthentication
 
 
-class CategoryViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+class CategoryViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
     queryset = Category.objects.select_related("department").all()
     serializer_class = CategorySerializer
     permission_classes = [IsAuthenticated]
+    authentication_classes = (AdminJWTAuthentication, CitizenJWTAuthentication, SessionAuthentication)
     pagination_class = None
 
+    def get_permissions(self):
+        if self.action in {"create", "update", "partial_update", "destroy"}:
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
 
-class TagViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
+    def get_serializer_class(self):
+        if self.action in {"create", "update", "partial_update"}:
+            return CategoryCreateSerializer
+        return CategorySerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        category = serializer.save()
+        output = CategorySerializer(category, context=self.get_serializer_context())
+        headers = self.get_success_headers(output.data)
+        return Response(output.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class TagViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = [IsAuthenticated]
+    authentication_classes = (AdminJWTAuthentication, CitizenJWTAuthentication, SessionAuthentication)
     pagination_class = None
+
+    def get_permissions(self):
+        if self.action in {"create", "update", "partial_update", "destroy"}:
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        tag = serializer.save()
+        output = TagSerializer(tag, context=self.get_serializer_context())
+        headers = self.get_success_headers(output.data)
+        return Response(output.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class DepartmentViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    queryset = Department.objects.all()
+    serializer_class = DepartmentSerializer
+    permission_classes = [IsAuthenticated]
+    authentication_classes = (AdminJWTAuthentication, CitizenJWTAuthentication, SessionAuthentication)
+    pagination_class = None
+
+    def get_permissions(self):
+        if self.action in {"create", "update", "partial_update", "destroy"}:
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        department = serializer.save()
+        output = DepartmentSerializer(department, context=self.get_serializer_context())
+        headers = self.get_success_headers(output.data)
+        return Response(output.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class ReportViewSet(

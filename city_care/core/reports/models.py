@@ -6,6 +6,8 @@ from django.db import models
 from django.utils import timezone
 
 from accounts.models import Administrator, Citizen
+from django.conf import settings
+from .storage import AttachmentStorage
 
 
 class Department(models.Model):
@@ -122,7 +124,10 @@ class ReportTag(models.Model):
 
 class Attachment(models.Model):
     report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name="attachments")
-    file = models.FileField(upload_to="reports/attachments/")
+    file = models.FileField(
+        upload_to="",
+        storage=AttachmentStorage() if getattr(settings, "USE_SUPABASE_ATTACHMENTS", True) else None,
+    )
     description = models.CharField(max_length=255, blank=True)
     created_at = models.DateTimeField(default=timezone.now)
 

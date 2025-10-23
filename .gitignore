@@ -1,1 +1,3 @@
 .venv/
+.env
+city_care/db.sqlite3

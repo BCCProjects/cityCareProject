@@ -14,7 +14,7 @@ from core.services.report_service import ReportService
 class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Department
-        fields = ("id", "name", "email", "phone")
+        fields = ("id", "name", "email", "phone", "description")
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -23,6 +23,17 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ("id", "name", "slug", "description", "department")
+
+
+class CategoryCreateSerializer(serializers.ModelSerializer):
+    department_id = serializers.PrimaryKeyRelatedField(
+        queryset=Department.objects.all(), source="department", write_only=True
+    )
+
+    class Meta:
+        model = Category
+        fields = ("id", "name", "slug", "description", "department_id")
+        read_only_fields = ("id",)
 
 
 class TagSerializer(serializers.ModelSerializer):

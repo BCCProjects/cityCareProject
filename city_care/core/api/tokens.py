@@ -20,3 +20,22 @@ class CitizenRefreshToken(RefreshToken):
 
 class CitizenAccessToken(AccessToken):
     pass
+
+
+class AdminRefreshToken(RefreshToken):
+    @classmethod
+    def for_admin(cls, admin):
+        token = cls()
+        token["sub"] = str(admin.pk)
+        token["email"] = admin.email
+        token["scope"] = "admin"
+        token["type"] = "admin"
+        token.access_token["sub"] = str(admin.pk)
+        token.access_token["email"] = admin.email
+        token.access_token["scope"] = "admin"
+        token.access_token["type"] = "admin"
+        return token
+
+
+class AdminAccessToken(AccessToken):
+    pass

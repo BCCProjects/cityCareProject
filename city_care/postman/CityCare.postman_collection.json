@@ -1,223 +1,957 @@
-{
-  "info": {
-    "name": "City Care API",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "item": [
-    {
-      "name": "Citizen Register",
-      "request": {
-        "method": "POST",
-        "header": [
-          {"key": "Content-Type", "value": "application/json"},
-          {"key": "X_USER", "value": "{{api_user}}"},
-          {"key": "X_APP", "value": "{{api_app}}"},
-          {"key": "X_SIGNATURE", "value": "{{api_signature}}"}
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"cidadão@example.com\",\n  \"full_name\": \"Fulano da Silva\",\n  \"phone\": \"11999999999\",\n  \"password\": \"senhaSegura123\"\n}"
-        },
-        "url": {
-          "raw": "{{base_url}}/api/auth/citizens/register",
-          "host": ["{{base_url}}"],
-          "path": ["api", "auth", "citizens", "register"]
-        }
-      }
-    },
-    {
-      "name": "Citizen Token",
-      "request": {
-        "method": "POST",
-        "header": [
-          {"key": "Content-Type", "value": "application/json"},
-          {"key": "X_USER", "value": "{{api_user}}"},
-          {"key": "X_APP", "value": "{{api_app}}"},
-          {"key": "X_SIGNATURE", "value": "{{api_signature}}"}
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"cidadão@example.com\",\n  \"password\": \"senhaSegura123\"\n}"
-        },
-        "url": {
-          "raw": "{{base_url}}/api/auth/citizens/token",
-          "host": ["{{base_url}}"],
-          "path": ["api", "auth", "citizens", "token"]
-        }
-      }
-    },
-    {
-      "name": "Admin Register",
-      "request": {
-        "method": "POST",
-        "header": [
-          {"key": "Content-Type", "value": "application/json"},
-          {"key": "X_USER", "value": "{{api_user}}"},
-          {"key": "X_APP", "value": "{{api_app}}"},
-          {"key": "X_SIGNATURE", "value": "{{api_signature}}"}
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"email\": \"admin@example.com\",\n  \"first_name\": \"Admin\",\n  \"last_name\": \"City\",\n  \"password\": \"senhaSegura123\"\n}"
-        },
-        "url": {
-          "raw": "{{base_url}}/api/auth/admins/register",
-          "host": ["{{base_url}}"],
-          "path": ["api", "auth", "admins", "register"]
-        }
-      }
-    },
-    {
-      "name": "List Categories",
-      "request": {
-        "method": "GET",
-        "header": [
-          {"key": "Authorization", "value": "Bearer {{access_token}}"}
-        ],
-        "url": {
-          "raw": "{{base_url}}/api/categories/",
-          "host": ["{{base_url}}"],
-          "path": ["api", "categories", ""]
-        }
-      }
-    },
-    {
-      "name": "List Tags",
-      "request": {
-        "method": "GET",
-        "header": [
-          {"key": "Authorization", "value": "Bearer {{access_token}}"}
-        ],
-        "url": {
-          "raw": "{{base_url}}/api/tags/",
-          "host": ["{{base_url}}"],
-          "path": ["api", "tags", ""]
-        }
-      }
-    },
-    {
-      "name": "Create Report",
-      "request": {
-        "method": "POST",
-        "header": [
-          {"key": "Authorization", "value": "Bearer {{access_token}}"},
-          {"key": "Content-Type", "value": "multipart/form-data"}
-        ],
-        "body": {
-          "mode": "formdata",
-          "formdata": [
-            {"key": "category_id", "value": "1"},
-            {"key": "title", "value": "Buraco perigoso na avenida"},
-            {"key": "description", "value": "Existe um buraco profundo no asfalto."},
-            {"key": "priority", "value": "ALTA"},
-            {"key": "address", "value": "Rua Central, 100"},
-            {"key": "neighborhood", "value": "Centro"},
-            {"key": "latitude", "value": "-23.550520"},
-            {"key": "longitude", "value": "-46.633308"},
-            {"key": "tags", "value": "1"}
-          ]
-        },
-        "url": {
-          "raw": "{{base_url}}/api/reports/",
-          "host": ["{{base_url}}"],
-          "path": ["api", "reports", ""]
-        }
-      }
-    },
-    {
-      "name": "List Reports",
-      "request": {
-        "method": "GET",
-        "header": [
-          {"key": "Authorization", "value": "Bearer {{access_token}}"}
-        ],
-        "url": {
-          "raw": "{{base_url}}/api/reports/?status=ABERTO",
-          "host": ["{{base_url}}"],
-          "path": ["api", "reports", ""],
-          "query": [
-            {"key": "status", "value": "ABERTO", "description": "Filtro opcional por status"}
-          ]
-        }
-      }
-    },
-    {
-      "name": "Report Detail",
-      "request": {
-        "method": "GET",
-        "header": [
-          {"key": "Authorization", "value": "Bearer {{access_token}}"}
-        ],
-        "url": {
-          "raw": "{{base_url}}/api/reports/{{report_id}}/",
-          "host": ["{{base_url}}"],
-          "path": ["api", "reports", "{{report_id}}", ""]
-        }
-      }
-    },
-    {
-      "name": "Add Comment",
-      "request": {
-        "method": "POST",
-        "header": [
-          {"key": "Authorization", "value": "Bearer {{access_token}}"},
-          {"key": "Content-Type", "value": "application/json"}
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"message\": \"Preciso de atualização\"\n}"
-        },
-        "url": {
-          "raw": "{{base_url}}/api/reports/{{report_id}}/comments/",
-          "host": ["{{base_url}}"],
-          "path": ["api", "reports", "{{report_id}}", "comments", ""]
-        }
-      }
-    },
-    {
-      "name": "Eligible for Ignore",
-      "request": {
-        "method": "GET",
-        "header": [
-          {"key": "Authorization", "value": "Bearer {{access_token}}"}
-        ],
-        "url": {
-          "raw": "{{base_url}}/api/reports/eligibles-ignore?hours=168",
-          "host": ["{{base_url}}"],
-          "path": ["api", "reports", "eligibles-ignore"],
-          "query": [
-            {"key": "hours", "value": "168"}
-          ]
-        }
-      }
-    },
-    {
-      "name": "Average Resolution",
-      "request": {
-        "method": "GET",
-        "header": [
-          {"key": "Authorization", "value": "Bearer {{access_token}}"}
-        ],
-        "url": {
-          "raw": "{{base_url}}/api/reports/avg-resolution/",
-          "host": ["{{base_url}}"],
-          "path": ["api", "reports", "avg-resolution", ""]
-        }
-      }
-    },
-    {
-      "name": "Dashboard Overview",
-      "request": {
-        "method": "GET",
-        "header": [
-          {"key": "Authorization", "value": "Bearer {{access_token}}"}
-        ],
-        "url": {
-          "raw": "{{base_url}}/api/dashboard/",
-          "host": ["{{base_url}}"],
-          "path": ["api", "dashboard", ""]
-        }
-      }
-    }
-  ]
+﻿{
+    "info":  {
+                 "name":  "City Care API",
+                 "schema":  "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+             },
+    "item":  [
+                 {
+                     "name":  "Citizen Register",
+                     "request":  {
+                                     "method":  "POST",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Content-Type",
+                                                        "value":  "application/json"
+                                                    },
+                                                    {
+                                                        "key":  "X-USER",
+                                                        "value":  "{{api_user}}"
+                                                    },
+                                                    {
+                                                        "key":  "X-APP",
+                                                        "value":  "{{api_app}}"
+                                                    },
+                                                    {
+                                                        "key":  "X-SIGNATURE",
+                                                        "value":  "{{api_signature}}"
+                                                    }
+                                                ],
+                                     "body":  {
+                                                  "mode":  "raw",
+                                                  "raw":  "{\n  \"email\": \"cidadÃ£o@example.com\",\n  \"full_name\": \"Fulano da Silva\",\n  \"phone\": \"11999999999\",\n  \"password\": \"senhaSegura123\"\n}"
+                                              },
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/auth/citizens/register",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "auth",
+                                                              "citizens",
+                                                              "register"
+                                                          ]
+                                             }
+                                 }
+                 },
+                 {
+                     "name":  "Citizen Token",
+                     "request":  {
+                                     "method":  "POST",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Content-Type",
+                                                        "value":  "application/json"
+                                                    },
+                                                    {
+                                                        "key":  "X-USER",
+                                                        "value":  "{{api_user}}"
+                                                    },
+                                                    {
+                                                        "key":  "X-APP",
+                                                        "value":  "{{api_app}}"
+                                                    },
+                                                    {
+                                                        "key":  "X-SIGNATURE",
+                                                        "value":  "{{api_signature}}"
+                                                    }
+                                                ],
+                                     "body":  {
+                                                  "mode":  "raw",
+                                                  "raw":  "{\n  \"email\": \"cidadÃ£o@example.com\",\n  \"password\": \"senhaSegura123\"\n}"
+                                              },
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/auth/citizens/token",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "auth",
+                                                              "citizens",
+                                                              "token"
+                                                          ]
+                                             }
+                                 },
+                     "event":  [
+                                   {
+                                       "listen":  "test",
+                                       "script":  {
+                                                      "type":  "text/javascript",
+                                                      "exec":  [
+                                                                   "pm.test(\u0027Token de cidadÃ£o retornado com sucesso\u0027, function () {",
+                                                                   "  pm.response.to.have.status(200);",
+                                                                   "  const json = pm.response.json();",
+                                                                   "  pm.expect(json).to.have.property(\u0027access\u0027);",
+                                                                   "  pm.expect(json).to.have.property(\u0027refresh\u0027);",
+                                                                   "  pm.environment.set(\u0027access_token\u0027, json.access);",
+                                                                   "  pm.environment.set(\u0027refresh_token\u0027, json.refresh);",
+                                                                   "});"
+                                                               ]
+                                                  }
+                                   }
+                               ]
+                 },
+                 {
+                     "name":  "Admin Register",
+                     "request":  {
+                                     "method":  "POST",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Content-Type",
+                                                        "value":  "application/json"
+                                                    },
+                                                    {
+                                                        "key":  "X-USER",
+                                                        "value":  "{{api_user}}"
+                                                    },
+                                                    {
+                                                        "key":  "X-APP",
+                                                        "value":  "{{api_app}}"
+                                                    },
+                                                    {
+                                                        "key":  "X-SIGNATURE",
+                                                        "value":  "{{api_signature}}"
+                                                    }
+                                                ],
+                                     "body":  {
+                                                  "mode":  "raw",
+                                                  "raw":  "{\n  \"email\": \"admin@example.com\",\n  \"first_name\": \"Admin\",\n  \"last_name\": \"City\",\n  \"password\": \"senhaSegura123\"\n}"
+                                              },
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/auth/admins/register",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "auth",
+                                                              "admins",
+                                                              "register"
+                                                          ]
+                                             }
+                                 }
+                 },
+                 {
+                     "name":  "Admin Token",
+                     "request":  {
+                                     "method":  "POST",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Content-Type",
+                                                        "value":  "application/json"
+                                                    },
+                                                    {
+                                                        "key":  "X-USER",
+                                                        "value":  "{{api_user}}"
+                                                    },
+                                                    {
+                                                        "key":  "X-APP",
+                                                        "value":  "{{api_app}}"
+                                                    },
+                                                    {
+                                                        "key":  "X-SIGNATURE",
+                                                        "value":  "{{api_signature}}"
+                                                    }
+                                                ],
+                                     "body":  {
+                                                  "mode":  "raw",
+                                                  "raw":  "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"senhaSegura123\"\n}"
+                                              },
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/auth/admins/token",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "auth",
+                                                              "admins",
+                                                              "token"
+                                                          ]
+                                             }
+                                 },
+                     "event":  [
+                                   {
+                                       "listen":  "test",
+                                       "script":  {
+                                                      "type":  "text/javascript",
+                                                      "exec":  [
+                                                                   "pm.test(\u0027Token de admin retornado com sucesso\u0027, function () {",
+                                                                   "  pm.response.to.have.status(200);",
+                                                                   "  const json = pm.response.json();",
+                                                                   "  pm.expect(json).to.have.property(\u0027access\u0027);",
+                                                                   "  pm.environment.set(\u0027admin_access_token\u0027, json.access);",
+                                                                   "});"
+                                                               ]
+                                                  }
+                                   }
+                               ]
+                 },
+                 {
+                     "name":  "List Categories",
+                     "request":  {
+                                     "method":  "GET",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{access_token}}"
+                                                    }
+                                                ],
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/categories/",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "categories",
+                                                              ""
+                                                          ]
+                                             }
+                                 }
+                 },
+                 {
+                     "name":  "List Tags",
+                     "request":  {
+                                     "method":  "GET",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{access_token}}"
+                                                    }
+                                                ],
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/tags/",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "tags",
+                                                              ""
+                                                          ]
+                                             }
+                                 }
+                 },
+                 {
+                     "name":  "Create Category",
+                     "request":  {
+                                     "method":  "POST",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{admin_access_token}}"
+                                                    },
+                                                    {
+                                                        "key":  "Content-Type",
+                                                        "value":  "application/json"
+                                                    }
+                                                ],
+                                     "body":  {
+                                                  "mode":  "raw",
+                                                  "raw":  "{\n  \"name\": \"Iluminacao Publica\",\n  \"slug\": \"iluminacao-publica\",\n  \"description\": \"Lampadas queimadas\",\n  \"department_id\": 1\n}"
+                                              },
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/categories/",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "categories",
+                                                              ""
+                                                          ]
+                                             }
+                                 }
+                 },
+                 {
+                     "name":  "Create Tag",
+                     "request":  {
+                                     "method":  "POST",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{admin_access_token}}"
+                                                    },
+                                                    {
+                                                        "key":  "Content-Type",
+                                                        "value":  "application/json"
+                                                    }
+                                                ],
+                                     "body":  {
+                                                  "mode":  "raw",
+                                                  "raw":  "{\n  \"name\": \"urgente\",\n  \"slug\": \"urgente\"\n}"
+                                              },
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/tags/",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "tags",
+                                                              ""
+                                                          ]
+                                             }
+                                 }
+                 },
+                 {
+                     "name":  "Create Report",
+                     "request":  {
+                                     "method":  "POST",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{access_token}}"
+                                                    },
+                                                    {
+                                                        "key":  "Content-Type",
+                                                        "value":  "multipart/form-data"
+                                                    }
+                                                ],
+                                     "body":  {
+                                                  "mode":  "formdata",
+                                                  "formdata":  [
+                                                                   {
+                                                                       "key":  "category_id",
+                                                                       "value":  "1"
+                                                                   },
+                                                                   {
+                                                                       "key":  "title",
+                                                                       "value":  "Buraco perigoso na avenida"
+                                                                   },
+                                                                   {
+                                                                       "key":  "description",
+                                                                       "value":  "Existe um buraco profundo no asfalto."
+                                                                   },
+                                                                   {
+                                                                       "key":  "priority",
+                                                                       "value":  "ALTA"
+                                                                   },
+                                                                   {
+                                                                       "key":  "address",
+                                                                       "value":  "Rua Central, 100"
+                                                                   },
+                                                                   {
+                                                                       "key":  "neighborhood",
+                                                                       "value":  "Centro"
+                                                                   },
+                                                                   {
+                                                                       "key":  "latitude",
+                                                                       "value":  "-23.550520"
+                                                                   },
+                                                                   {
+                                                                       "key":  "longitude",
+                                                                       "value":  "-46.633308"
+                                                                   },
+                                                                   {
+                                                                       "key":  "tags",
+                                                                       "value":  "1"
+                                                                   },
+                                                                   {
+                                                                       "key": "tags",
+                                                                       "value": "2"
+                                                                   },
+                                                                   {
+                                                                       "key": "attachments",
+                                                                       "type": "file",
+                                                                       "src": ""
+                                                                   },
+                                                                   {
+                                                                       "key": "attachments",
+                                                                       "type": "file",
+                                                                       "src": ""
+                                                                   }
+                                                               ]
+                                              },
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/reports/",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "reports",
+                                                              ""
+                                                          ]
+                                             }
+                                 }
+                 },
+                 {
+                     "name":  "List Reports",
+                     "request":  {
+                                     "method":  "GET",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{access_token}}"
+                                                    }
+                                                ],
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/reports/?status=ABERTO",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "reports",
+                                                              ""
+                                                          ],
+                                                 "query":  [
+                                                               {
+                                                                   "key":  "status",
+                                                                   "value":  "ABERTO",
+                                                                   "description":  "Filtro opcional por status"
+                                                               }
+                                                           ]
+                                             }
+                                 }
+                 },
+                 {
+                     "name":  "Report Detail",
+                     "request":  {
+                                     "method":  "GET",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{access_token}}"
+                                                    }
+                                                ],
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/reports/{{report_id}}/",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "reports",
+                                                              "{{report_id}}",
+                                                              ""
+                                                          ]
+                                             }
+                                 }
+                 },
+                 {
+                     "name":  "Add Comment",
+                     "request":  {
+                                     "method":  "POST",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{access_token}}"
+                                                    },
+                                                    {
+                                                        "key":  "Content-Type",
+                                                        "value":  "application/json"
+                                                    }
+                                                ],
+                                     "body":  {
+                                                  "mode":  "raw",
+                                                  "raw":  "{\n  \"message\": \"Preciso de atualizaÃ§Ã£o\"\n}"
+                                              },
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/reports/{{report_id}}/comments/",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "reports",
+                                                              "{{report_id}}",
+                                                              "comments",
+                                                              ""
+                                                          ]
+                                             }
+                                 }
+                 },
+                 {
+                     "name":  "Eligible for Ignore",
+                     "request":  {
+                                     "method":  "GET",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{access_token}}"
+                                                    }
+                                                ],
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/reports/eligibles-ignore?hours=168",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "reports",
+                                                              "eligibles-ignore"
+                                                          ],
+                                                 "query":  [
+                                                               {
+                                                                   "key":  "hours",
+                                                                   "value":  "168"
+                                                               }
+                                                           ]
+                                             }
+                                 }
+                 },
+                 {
+                     "name":  "Average Resolution",
+                     "request":  {
+                                     "method":  "GET",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{access_token}}"
+                                                    }
+                                                ],
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/reports/avg-resolution/",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "reports",
+                                                              "avg-resolution",
+                                                              ""
+                                                          ]
+                                             }
+                                 }
+                 },
+                 {
+                     "name":  "Dashboard Overview",
+                     "request":  {
+                                     "method":  "GET",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{access_token}}"
+                                                    }
+                                                ],
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/dashboard/",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "dashboard",
+                                                              ""
+                                                          ]
+                                             }
+                                 }
+                 },
+                 {
+                     "name":  "List Departments",
+                     "request":  {
+                                     "method":  "GET",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{access_token}}"
+                                                    }
+                                                ],
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/departments/",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "departments",
+                                                              ""
+                                                          ]
+                                             }
+                                 }
+                 },
+                 {
+                     "name":  "Create Department",
+                     "request":  {
+                                     "method":  "POST",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{admin_access_token}}"
+                                                    },
+                                                    {
+                                                        "key":  "Content-Type",
+                                                        "value":  "application/json"
+                                                    }
+                                                ],
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/departments/",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "departments",
+                                                              ""
+                                                          ]
+                                             },
+                                     "body":  {
+                                                  "mode":  "raw",
+                                                  "raw":  "{\n  \"name\": \"Obras\",\n  \"email\": \"obras@prefeitura.gov\",\n  \"phone\": \"11 9999-9999\",\n  \"description\": \"Depto de Obras\"\n}"
+                                              }
+                                 }
+                 },
+                 {
+                     "name":  "Department Detail",
+                     "request":  {
+                                     "method":  "GET",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{access_token}}"
+                                                    }
+                                                ],
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/departments/{{department_id}}/",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "departments",
+                                                              "{{department_id}}",
+                                                              ""
+                                                          ]
+                                             }
+                                 }
+                 },
+                 {
+                     "name":  "Update Department (PUT)",
+                     "request":  {
+                                     "method":  "PUT",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{admin_access_token}}"
+                                                    },
+                                                    {
+                                                        "key":  "Content-Type",
+                                                        "value":  "application/json"
+                                                    }
+                                                ],
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/departments/{{department_id}}/",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "departments",
+                                                              "{{department_id}}",
+                                                              ""
+                                                          ]
+                                             },
+                                     "body":  {
+                                                  "mode":  "raw",
+                                                  "raw":  "{\n  \"name\": \"Obras e Manutenções\",\n  \"phone\": \"11 9888-7777\"\n}"
+                                              }
+                                 }
+                 },
+                 {
+                     "name":  "Update Department (PATCH)",
+                     "request":  {
+                                     "method":  "PATCH",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{admin_access_token}}"
+                                                    },
+                                                    {
+                                                        "key":  "Content-Type",
+                                                        "value":  "application/json"
+                                                    }
+                                                ],
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/departments/{{department_id}}/",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "departments",
+                                                              "{{department_id}}",
+                                                              ""
+                                                          ]
+                                             },
+                                     "body":  {
+                                                  "mode":  "raw",
+                                                  "raw":  "{\n  \"name\": \"Obras e Manutenções\",\n  \"phone\": \"11 9888-7777\"\n}"
+                                              }
+                                 }
+                 },
+                 {
+                     "name":  "Delete Department",
+                     "request":  {
+                                     "method":  "DELETE",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{admin_access_token}}"
+                                                    },
+                                                    {
+                                                        "key":  "Content-Type",
+                                                        "value":  "application/json"
+                                                    }
+                                                ],
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/departments/{{department_id}}/",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "departments",
+                                                              "{{department_id}}",
+                                                              ""
+                                                          ]
+                                             }
+                                 }
+                 },
+                 {
+                     "name":  "Category Detail",
+                     "request":  {
+                                     "method":  "GET",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{access_token}}"
+                                                    }
+                                                ],
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/categories/{{category_id}}/",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "categories",
+                                                              "{{category_id}}",
+                                                              ""
+                                                          ]
+                                             }
+                                 }
+                 },
+                 {
+                     "name":  "Update Category (PUT)",
+                     "request":  {
+                                     "method":  "PUT",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{admin_access_token}}"
+                                                    },
+                                                    {
+                                                        "key":  "Content-Type",
+                                                        "value":  "application/json"
+                                                    }
+                                                ],
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/categories/{{category_id}}/",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "categories",
+                                                              "{{category_id}}",
+                                                              ""
+                                                          ]
+                                             },
+                                     "body":  {
+                                                  "mode":  "raw",
+                                                  "raw":  "{\n  \"name\": \"Iluminação Pública\",\n  \"slug\": \"iluminacao-publica\",\n  \"description\": \"Iluminação em vias públicas\",\n  \"department_id\": 1\n}"
+                                              }
+                                 }
+                 },
+                 {
+                     "name":  "Update Category (PATCH)",
+                     "request":  {
+                                     "method":  "PATCH",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{admin_access_token}}"
+                                                    },
+                                                    {
+                                                        "key":  "Content-Type",
+                                                        "value":  "application/json"
+                                                    }
+                                                ],
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/categories/{{category_id}}/",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "categories",
+                                                              "{{category_id}}",
+                                                              ""
+                                                          ]
+                                             },
+                                     "body":  {
+                                                  "mode":  "raw",
+                                                  "raw":  "{\n  \"name\": \"Iluminação Pública\",\n  \"slug\": \"iluminacao-publica\",\n  \"description\": \"Iluminação em vias públicas\",\n  \"department_id\": 1\n}"
+                                              }
+                                 }
+                 },
+                 {
+                     "name":  "Delete Category",
+                     "request":  {
+                                     "method":  "DELETE",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{admin_access_token}}"
+                                                    },
+                                                    {
+                                                        "key":  "Content-Type",
+                                                        "value":  "application/json"
+                                                    }
+                                                ],
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/categories/{{category_id}}/",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "categories",
+                                                              "{{category_id}}",
+                                                              ""
+                                                          ]
+                                             }
+                                 }
+                 },
+                 {
+                     "name":  "Tag Detail",
+                     "request":  {
+                                     "method":  "GET",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{access_token}}"
+                                                    }
+                                                ],
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/tags/{{tag_id}}/",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "tags",
+                                                              "{{tag_id}}",
+                                                              ""
+                                                          ]
+                                             }
+                                 }
+                 },
+                 {
+                     "name":  "Update Tag (PUT)",
+                     "request":  {
+                                     "method":  "PUT",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{admin_access_token}}"
+                                                    },
+                                                    {
+                                                        "key":  "Content-Type",
+                                                        "value":  "application/json"
+                                                    }
+                                                ],
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/tags/{{tag_id}}/",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "tags",
+                                                              "{{tag_id}}",
+                                                              ""
+                                                          ]
+                                             },
+                                     "body":  {
+                                                  "mode":  "raw",
+                                                  "raw":  "{\n  \"name\": \"urgente\",\n  \"slug\": \"urgente\"\n}"
+                                              }
+                                 }
+                 },
+                 {
+                     "name":  "Update Tag (PATCH)",
+                     "request":  {
+                                     "method":  "PATCH",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{admin_access_token}}"
+                                                    },
+                                                    {
+                                                        "key":  "Content-Type",
+                                                        "value":  "application/json"
+                                                    }
+                                                ],
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/tags/{{tag_id}}/",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "tags",
+                                                              "{{tag_id}}",
+                                                              ""
+                                                          ]
+                                             },
+                                     "body":  {
+                                                  "mode":  "raw",
+                                                  "raw":  "{\n  \"name\": \"urgente\",\n  \"slug\": \"urgente\"\n}"
+                                              }
+                                 }
+                 },
+                 {
+                     "name":  "Delete Tag",
+                     "request":  {
+                                     "method":  "DELETE",
+                                     "header":  [
+                                                    {
+                                                        "key":  "Authorization",
+                                                        "value":  "Bearer {{admin_access_token}}"
+                                                    },
+                                                    {
+                                                        "key":  "Content-Type",
+                                                        "value":  "application/json"
+                                                    }
+                                                ],
+                                     "url":  {
+                                                 "raw":  "{{base_url}}/api/tags/{{tag_id}}/",
+                                                 "host":  [
+                                                              "{{base_url}}"
+                                                          ],
+                                                 "path":  [
+                                                              "api",
+                                                              "tags",
+                                                              "{{tag_id}}",
+                                                              ""
+                                                          ]
+                                             }
+                                 }
+                 }
+             ]
 }
