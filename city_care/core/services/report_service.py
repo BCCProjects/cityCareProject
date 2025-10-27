@@ -49,10 +49,22 @@ class ReportService:
         attachments: Iterable,
     ) -> Report:
         with transaction.atomic():
+            if Report.objects.filter(category=category, latitude=latitude, longitude=longitude).exists():
+                from django.core.exceptions import ValidationError
+
+                raise ValidationError({
+                    "non_field_errors": [
+                        "Já existe uma ocorrência para esta categoria neste mesmo ponto (lat/lng).",
+                    ]
+                })
+
+            default_admin = Administrator.objects.order_by("id").first()
+
             report = Report(
                 citizen=citizen,
                 category=category,
                 department=department,
+                assigned_to=default_admin,
                 title=title,
                 description=description,
                 priority=priority,
@@ -67,6 +79,14 @@ class ReportService:
                 report.tags.set(tags)
             for attachment in attachments or []:
                 report.attachments.create(file=attachment, description=getattr(attachment, "description", ""))
+
+            StatusHistory.objects.create(
+                report=report,
+                previous_status=ReportStatus.ABERTO,
+                new_status=ReportStatus.ABERTO,
+                changed_by=default_admin,
+                notes="Atribuição inicial",
+            )
         return report
 
     @classmethod

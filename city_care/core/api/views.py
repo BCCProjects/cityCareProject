@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.response import Response
 
-from accounts.models import Citizen
+from accounts.models import Citizen, Administrator
 from core.api.serializers import (
     CategorySerializer,
     CategoryCreateSerializer,
@@ -47,6 +47,17 @@ class CategoryViewSet(
             return CategoryCreateSerializer
         return CategorySerializer
 
+    def list(self, request, *args, **kwargs):
+        department = request.query_params.get("department")
+        qs = self.get_queryset()
+        if department:
+            qs = qs.filter(department_id=department)
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(qs, many=True)
+        return Response(serializer.data)
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -124,18 +135,34 @@ class ReportViewSet(
     ordering = ["-created_at"]
 
     def get_queryset(self):
-        citizen: Citizen = self.request.user
-        queryset = (
-            Report.objects.filter(citizen=citizen)
-            .select_related("category", "category__department", "department")
+        user = self.request.user
+        base_qs = (
+            Report.objects.select_related("category", "category__department", "department")
             .prefetch_related("tags", "attachments", "comments__citizen")
         )
-        status_param = self.request.query_params.get("status")
-        category_param = self.request.query_params.get("category")
+
+        if isinstance(user, Administrator) and getattr(user, "is_staff", False):
+            queryset = base_qs
+        else:
+            queryset = base_qs.filter(citizen=user)
+
+        qp = self.request.query_params
+        status_param = qp.get("status")
+        category_param = qp.get("category")
+        department_param = qp.get("department")
+        priority_param = qp.get("priority")
+        tag_param = qp.get("tag")
+
         if status_param in ReportStatus.values:
             queryset = queryset.filter(status=status_param)
         if category_param:
             queryset = queryset.filter(category_id=category_param)
+        if department_param:
+            queryset = queryset.filter(department_id=department_param)
+        if priority_param:
+            queryset = queryset.filter(priority=priority_param)
+        if tag_param:
+            queryset = queryset.filter(tags__id=tag_param)
         return queryset
 
     def get_serializer_class(self):
@@ -177,14 +204,14 @@ class ReportViewSet(
         data = report_repository.get_reports_eligible_for_ignore(hours)
         return Response({"results": data})
 
-    @action(detail=False, methods=["get"], url_path="avg-resolution")
+    @action(detail=False, methods=["get"], url_path="avg-resolution", permission_classes=[IsAdminUser])
     def average_resolution(self, request, *args, **kwargs):
         data = report_repository.get_average_resolution_time_by_category()
         return Response({"results": data})
 
 
 class DashboardViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAdminUser]
 
     def list(self, request, *args, **kwargs):
         open_by_neighborhood = report_repository.get_open_reports_grouped_by_neighborhood()

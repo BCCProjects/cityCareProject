@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator
@@ -54,9 +54,9 @@ class Tag(models.Model):
 
 
 class ReportPriority(models.TextChoices):
-    LOW = "BAIXA", "Baixa"
-    MEDIUM = "MEDIA", "Média"
-    HIGH = "ALTA", "Alta"
+    LOW = "BAIXO", "Baixo"
+    MEDIUM = "MODERADO", "Moderado"
+    HIGH = "ALTO", "Alto"
 
 
 class ReportStatus(models.TextChoices):
@@ -73,6 +73,13 @@ class Report(models.Model):
     citizen = models.ForeignKey(Citizen, on_delete=models.PROTECT, related_name="reports")
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="reports")
     department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name="reports")
+    assigned_to = models.ForeignKey(
+        Administrator,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_reports",
+    )
     title = models.CharField(max_length=200, validators=[MinLengthValidator(10)])
     description = models.TextField()
     priority = models.CharField(max_length=12, choices=ReportPriority.choices, default=ReportPriority.MEDIUM)
@@ -98,12 +105,16 @@ class Report(models.Model):
                 name="check_longitude_range",
                 check=models.Q(longitude__gte=-180) & models.Q(longitude__lte=180),
             ),
+            models.UniqueConstraint(
+                fields=("category", "latitude", "longitude"),
+                name="unique_report_category_lat_lng",
+            ),
         ]
 
     def clean(self):
         super().clean()
         if self.category and self.department and self.category.department_id != self.department_id:
-            raise ValidationError("Categoria informada não pertence ao departamento selecionado.")
+            raise ValidationError("Categoria informada nÃ£o pertence ao departamento selecionado.")
         if self.status == ReportStatus.INDEFERIDO and not self.denied_reason:
             raise ValidationError({"denied_reason": "Informe o motivo de indeferimento."})
 

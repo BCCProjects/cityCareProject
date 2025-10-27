@@ -47,15 +47,17 @@ class ReportAdmin(admin.ModelAdmin):
         "title",
         "citizen",
         "category",
+        "department",
+        "assigned_to",
         "status",
         "priority",
         "created_at",
         "last_status_at",
     )
-    list_filter = ("status", "priority", "category__department")
+    list_filter = ("status", "priority", "category", "category__department", "assigned_to", "tags")
     search_fields = ("title", "citizen__full_name", "category__name")
     inlines = [AttachmentInline, ReportTagInline, CommentInline]
-    autocomplete_fields = ("citizen", "category", "department", "tags")
+    autocomplete_fields = ("citizen", "category", "department", "tags", "assigned_to")
     readonly_fields = ("created_at", "updated_at", "last_status_at")
 
 
