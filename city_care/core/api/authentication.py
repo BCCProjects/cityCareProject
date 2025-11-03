@@ -5,7 +5,7 @@ from rest_framework.authentication import BaseAuthentication, get_authorization_
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import AccessToken
 
-from accounts.models import Administrator, Citizen
+from accounts.models import Citizen, Employee
 
 
 class CitizenJWTAuthentication(BaseAuthentication):
@@ -19,29 +19,29 @@ class CitizenJWTAuthentication(BaseAuthentication):
         if parts[0].lower() != self.keyword:
             return None
         if len(parts) != 2:
-            raise exceptions.AuthenticationFailed("Cabeçalho de autorização inválido.")
+            raise exceptions.AuthenticationFailed("Cabecalho de autorizacao invalido.")
         raw_token = parts[1].decode()
         try:
             token = AccessToken(raw_token)
         except TokenError as exc:  # pragma: no cover - mensagem uniforme
-            raise exceptions.AuthenticationFailed(f"Token inválido: {exc}") from exc
+            raise exceptions.AuthenticationFailed(f"Token invalido: {exc}") from exc
 
         if token.get("scope") != "citizen":
-            raise exceptions.AuthenticationFailed("Escopo do token inválido.")
+            raise exceptions.AuthenticationFailed("Escopo do token invalido.")
 
         citizen_id = token.get("sub")
         if not citizen_id:
-            raise exceptions.AuthenticationFailed("Token sem identificação de usuário.")
+            raise exceptions.AuthenticationFailed("Token sem identificacao de usuario.")
 
         try:
             citizen = Citizen.objects.get(pk=citizen_id, is_active=True)
         except Citizen.DoesNotExist as exc:
-            raise exceptions.AuthenticationFailed("Cidadão não encontrado.") from exc
+            raise exceptions.AuthenticationFailed("Cidadao nao encontrado.") from exc
 
         return (citizen, None)
 
 
-class AdminJWTAuthentication(BaseAuthentication):
+class EmployeeJWTAuthentication(BaseAuthentication):
     keyword = b"bearer"
 
     def authenticate(self, request):
@@ -52,23 +52,23 @@ class AdminJWTAuthentication(BaseAuthentication):
         if parts[0].lower() != self.keyword:
             return None
         if len(parts) != 2:
-            raise exceptions.AuthenticationFailed("Cabeçalho de autorização inválido.")
+            raise exceptions.AuthenticationFailed("Cabecalho de autorizacao invalido.")
         raw_token = parts[1].decode()
         try:
             token = AccessToken(raw_token)
         except TokenError as exc:  # pragma: no cover - mensagem uniforme
-            raise exceptions.AuthenticationFailed(f"Token inválido: {exc}") from exc
+            raise exceptions.AuthenticationFailed(f"Token invalido: {exc}") from exc
 
-        if token.get("scope") != "admin":
-            return None  # não é um token de admin; permite outras autenticações
+        if token.get("scope") != "employee":
+            return None
 
-        admin_id = token.get("sub")
-        if not admin_id:
-            raise exceptions.AuthenticationFailed("Token sem identificação de usuário.")
+        employee_id = token.get("sub")
+        if not employee_id:
+            raise exceptions.AuthenticationFailed("Token sem identificacao de usuario.")
 
         try:
-            admin = Administrator.objects.get(pk=admin_id, is_active=True, is_staff=True)
-        except Administrator.DoesNotExist as exc:
-            raise exceptions.AuthenticationFailed("Administrador não encontrado.") from exc
+            employee = Employee.objects.get(pk=employee_id, is_active=True, is_staff=True)
+        except Employee.DoesNotExist as exc:
+            raise exceptions.AuthenticationFailed("Employee nao encontrado.") from exc
 
-        return (admin, None)
+        return (employee, None)

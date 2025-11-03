@@ -10,10 +10,12 @@ Backend do MVP da plataforma City Care, construído com Django e Django REST Fra
 | **Category** | Tipos de ocorrência vinculados a um departamento (ex.: Iluminação, Obras). |
 | **Tag** | Marcadores escolhidos pelo cidadão ao abrir uma ocorrência (Buraco, Entulho etc.). |
 | **Citizen** | Usuário do aplicativo móvel com autenticação via JWT dedicada. |
-| **Administrator** | Usuário do órgão resolutor autenticado no Django Admin. |
+| **Employee** | Usuário do órgão responsável autenticado no Django Admin (Django staff). |
+| **Organization** | Entidade responsável por uma cidade (relação 1:1 com City). |
+| **State** | Estado (UF) ao qual as cidades pertencem, identificado por sigla. |
+| **City** | Cidade atendida pelo aplicativo, vinculada a um State e à sua Organization. |
 | **Report** | Ocorrência em si, com status, prioridade, endereço, coordenadas e relação N:N com tags. |
 | **Attachment** | Fotos anexadas pelo cidadão. |
-| **Comment** | Comentários públicos adicionados pelo cidadão. |
 | **StatusHistory** | Linha de auditoria para cada transição de status, registrando responsável e notas. |
 
 O fluxo de status segue **ABERTO → ANALISANDO → DEFERIDO → EM_ANDAMENTO → CONCLUÍDO** com ramificações para **INDEFERIDO** e marcação manual como **IGNORADO** quando ultrapassar 168 horas sem atualização.
@@ -72,8 +74,7 @@ A migração `0002_database_objects` ainda cria:
 | `POST` | `/api/reports/` | Cria ocorrência com tags e anexos (multipart). |
 | `GET` | `/api/reports/` | Lista ocorrências do cidadão com filtros de status e categoria. |
 | `GET` | `/api/reports/{id}/` | Detalhe completo da ocorrência. |
-| `POST` | `/api/reports/{id}/comments/` | Adiciona comentário público. |
-| `GET` | `/api/reports/eligibles-ignore` | Consulta relatórios elegíveis a serem ignorados (param `hours`). |
+| `GET` | `/api/reports/eligibles-ignore` | Consulta relatórios elegíveis (apenas chamadas internas com cabeçalhos X-USER/X-APP/X-SIGNATURE). |
 | `GET` | `/api/reports/avg-resolution/` | Média de resolução por categoria em horas. |
 | `GET` | `/api/dashboard/` | Dados agregados (abertos por bairro/prioridade e série semanal).
 
@@ -97,4 +98,10 @@ Os testes cobrem o fluxo completo de status, validação de indeferimento, consu
 
 - Integrar armazenamento de mídia externo.
 - Construir painel web para o órgão reaproveitando os serviços existentes.
-- Automatizar job de marcação como ignorado usando o serviço transacional quando o escopo permitir.
+- Jobs automáticos (cron):
+  - Marcação automática como IGNORADO após 72h sem atualização (diário 02:00).
+  - Backup diferencial diário (02:20) e backup completo semanal (domingo 03:00).
+  - Gerenciar com `django-crontab`:
+    - Adicionar: `python manage.py crontab add`
+    - Listar: `python manage.py crontab show`
+    - Remover: `python manage.py crontab remove`

@@ -2,16 +2,15 @@ from __future__ import annotations
 
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.authentication import SessionAuthentication
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
-from accounts.models import Citizen, Administrator
+from accounts.models import Citizen, City, Employee, Organization, State
+from accounts.serializers import CitySerializer, OrganizationSerializer, StateSerializer
 from core.api.serializers import (
     CategorySerializer,
     CategoryCreateSerializer,
-    CommentCreateSerializer,
-    CommentSerializer,
     DepartmentSerializer,
     ReportCreateSerializer,
     ReportDetailSerializer,
@@ -20,7 +19,85 @@ from core.api.serializers import (
 )
 from core.repositories import report_repository
 from core.reports.models import Category, Department, Report, ReportStatus, Tag
-from core.api.authentication import AdminJWTAuthentication, CitizenJWTAuthentication
+from core.api.authentication import CitizenJWTAuthentication, EmployeeJWTAuthentication
+from core.api.permissions import InternalAPIPermission
+
+
+class StateViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    queryset = State.objects.all()
+    serializer_class = StateSerializer
+    permission_classes = [IsAuthenticated]
+    authentication_classes = (EmployeeJWTAuthentication, CitizenJWTAuthentication, SessionAuthentication)
+    pagination_class = None
+
+    def get_permissions(self):
+        if self.action in {"create", "update", "partial_update", "destroy"}:
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
+
+
+class CityViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    queryset = City.objects.select_related("state").all()
+    serializer_class = CitySerializer
+    permission_classes = [IsAuthenticated]
+    authentication_classes = (EmployeeJWTAuthentication, CitizenJWTAuthentication, SessionAuthentication)
+    pagination_class = None
+
+    def get_permissions(self):
+        if self.action in {"create", "update", "partial_update", "destroy"}:
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        state = self.request.query_params.get("state")
+        if state:
+            qs = qs.filter(state_id=state)
+        return qs
+
+
+class OrganizationViewSet(
+    mixins.ListModelMixin,
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    viewsets.GenericViewSet,
+):
+    queryset = Organization.objects.select_related("city", "city__state").all()
+    serializer_class = OrganizationSerializer
+    permission_classes = [IsAuthenticated]
+    authentication_classes = (EmployeeJWTAuthentication, CitizenJWTAuthentication, SessionAuthentication)
+    pagination_class = None
+
+    def get_permissions(self):
+        if self.action in {"create", "update", "partial_update", "destroy"}:
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        city = self.request.query_params.get("city")
+        state = self.request.query_params.get("state")
+        if city:
+            qs = qs.filter(city_id=city)
+        if state:
+            qs = qs.filter(city__state_id=state)
+        return qs
 
 
 class CategoryViewSet(
@@ -34,7 +111,7 @@ class CategoryViewSet(
     queryset = Category.objects.select_related("department").all()
     serializer_class = CategorySerializer
     permission_classes = [IsAuthenticated]
-    authentication_classes = (AdminJWTAuthentication, CitizenJWTAuthentication, SessionAuthentication)
+    authentication_classes = (EmployeeJWTAuthentication, CitizenJWTAuthentication, SessionAuthentication)
     pagination_class = None
 
     def get_permissions(self):
@@ -78,7 +155,7 @@ class TagViewSet(
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = [IsAuthenticated]
-    authentication_classes = (AdminJWTAuthentication, CitizenJWTAuthentication, SessionAuthentication)
+    authentication_classes = (EmployeeJWTAuthentication, CitizenJWTAuthentication, SessionAuthentication)
     pagination_class = None
 
     def get_permissions(self):
@@ -106,7 +183,7 @@ class DepartmentViewSet(
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
     permission_classes = [IsAuthenticated]
-    authentication_classes = (AdminJWTAuthentication, CitizenJWTAuthentication, SessionAuthentication)
+    authentication_classes = (EmployeeJWTAuthentication, CitizenJWTAuthentication, SessionAuthentication)
     pagination_class = None
 
     def get_permissions(self):
@@ -138,10 +215,10 @@ class ReportViewSet(
         user = self.request.user
         base_qs = (
             Report.objects.select_related("category", "category__department", "department")
-            .prefetch_related("tags", "attachments", "comments__citizen")
+            .prefetch_related("tags", "attachments")
         )
 
-        if isinstance(user, Administrator) and getattr(user, "is_staff", False):
+        if isinstance(user, Employee) and getattr(user, "is_staff", False):
             queryset = base_qs
         else:
             queryset = base_qs.filter(citizen=user)
@@ -186,16 +263,9 @@ class ReportViewSet(
         headers = self.get_success_headers(output.data)
         return Response(output.data, status=status.HTTP_201_CREATED, headers=headers)
 
-    @action(detail=True, methods=["post"], url_path="comments")
-    def add_comment(self, request, *args, **kwargs):
-        report = self.get_object()
-        serializer = CommentCreateSerializer(data=request.data)
-        serializer.context.update({"report": report, "citizen": request.user})
-        serializer.is_valid(raise_exception=True)
-        comment = serializer.save()
-        return Response(CommentSerializer(comment).data, status=status.HTTP_201_CREATED)
+    # Comments feature removed
 
-    @action(detail=False, methods=["get"], url_path="eligibles-ignore")
+    @action(detail=False, methods=["get"], url_path="eligibles-ignore", permission_classes=[InternalAPIPermission])
     def eligible_for_ignore(self, request, *args, **kwargs):
         try:
             hours = int(request.query_params.get("hours", 168))
@@ -222,3 +292,37 @@ class DashboardViewSet(viewsets.ViewSet):
                 "weekly_series": weekly_series,
             }
         )
+
+
+class SystemOpsViewSet(viewsets.ViewSet):
+    permission_classes = [InternalAPIPermission]
+
+    @action(detail=False, methods=["post"], url_path="backup/full")
+    def backup_full(self, request, *args, **kwargs):
+        from io import StringIO
+        from django.core.management import call_command
+
+        buf = StringIO()
+        try:
+            call_command("backup_full", stdout=buf)
+            return Response({"detail": "Backup completo disparado com sucesso.", "output": buf.getvalue()})
+        except Exception as exc:
+            return Response(
+                {"detail": f"Falha ao executar backup completo: {exc}", "output": buf.getvalue()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+    @action(detail=False, methods=["post"], url_path="backup/diff")
+    def backup_diff(self, request, *args, **kwargs):
+        from io import StringIO
+        from django.core.management import call_command
+
+        buf = StringIO()
+        try:
+            call_command("backup_diff", stdout=buf)
+            return Response({"detail": "Backup diferencial disparado com sucesso.", "output": buf.getvalue()})
+        except Exception as exc:
+            return Response(
+                {"detail": f"Falha ao executar backup diferencial: {exc}", "output": buf.getvalue()},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

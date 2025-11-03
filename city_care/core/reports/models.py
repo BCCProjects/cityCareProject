@@ -1,12 +1,12 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator
 from django.db import models
 from django.utils import timezone
 
-from accounts.models import Administrator, Citizen
-from django.conf import settings
+from accounts.models import Citizen, Organization
 from .storage import AttachmentStorage
 
 
@@ -65,7 +65,7 @@ class ReportStatus(models.TextChoices):
     DEFERIDO = "DEFERIDO", "Deferido"
     INDEFERIDO = "INDEFERIDO", "Indeferido"
     EM_ANDAMENTO = "EM_ANDAMENTO", "Em andamento"
-    CONCLUIDO = "CONCLUIDO", "Concluído"
+    CONCLUIDO = "CONCLUIDO", "Concluido"
     IGNORADO = "IGNORADO", "Ignorado"
 
 
@@ -73,8 +73,13 @@ class Report(models.Model):
     citizen = models.ForeignKey(Citizen, on_delete=models.PROTECT, related_name="reports")
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="reports")
     department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name="reports")
+    organization = models.ForeignKey(
+        Organization,
+        on_delete=models.PROTECT,
+        related_name="reports",
+    )
     assigned_to = models.ForeignKey(
-        Administrator,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -82,13 +87,21 @@ class Report(models.Model):
     )
     title = models.CharField(max_length=200, validators=[MinLengthValidator(10)])
     description = models.TextField()
-    priority = models.CharField(max_length=12, choices=ReportPriority.choices, default=ReportPriority.MEDIUM)
+    priority = models.CharField(
+        max_length=12,
+        choices=ReportPriority.choices,
+        default=ReportPriority.MEDIUM,
+    )
     address = models.CharField(max_length=255)
     neighborhood = models.CharField(max_length=150)
     latitude = models.DecimalField(max_digits=9, decimal_places=6)
     longitude = models.DecimalField(max_digits=9, decimal_places=6)
-    status = models.CharField(max_length=20, choices=ReportStatus.choices, default=ReportStatus.ABERTO)
-    denied_reason = models.TextField(blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=ReportStatus.choices,
+        default=ReportStatus.ABERTO,
+    )
+    denied_reason = models.TextField(blank=True, null=True)
     last_status_at = models.DateTimeField(default=timezone.now)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
@@ -114,12 +127,42 @@ class Report(models.Model):
     def clean(self):
         super().clean()
         if self.category and self.department and self.category.department_id != self.department_id:
-            raise ValidationError("Categoria informada nÃ£o pertence ao departamento selecionado.")
+            raise ValidationError("Categoria informada nao pertence ao departamento selecionado.")
+        if self.citizen_id and self.organization_id:
+            expected_org = getattr(self.citizen.city, "organization", None)
+            if expected_org is None:
+                raise ValidationError({"organization": "No organization configured for the citizen city."})
+            if expected_org.pk != self.organization_id:
+                raise ValidationError({"organization": "Organization does not match the citizen city."})
         if self.status == ReportStatus.INDEFERIDO and not self.denied_reason:
             raise ValidationError({"denied_reason": "Informe o motivo de indeferimento."})
 
     def __str__(self) -> str:  # pragma: no cover
         return self.title
+
+    def save(self, *args, **kwargs):
+        status_changed = False
+        previous_status = None
+        if self.pk:
+            try:
+                original = Report.objects.only("status", "denied_reason").get(pk=self.pk)
+                if original.status != self.status:
+                    status_changed = True
+                    previous_status = original.status
+                    self.last_status_at = timezone.now()
+                    if self.status != ReportStatus.INDEFERIDO and self.denied_reason:
+                        self.denied_reason = ""
+            except Report.DoesNotExist:
+                pass
+        super().save(*args, **kwargs)
+        if status_changed and previous_status is not None:
+            StatusHistory.objects.create(
+                report=self,
+                previous_status=previous_status,
+                new_status=self.status,
+                changed_by=None,
+                notes="Atualizacao direta de status",
+            )
 
 
 class ReportTag(models.Model):
@@ -146,22 +189,12 @@ class Attachment(models.Model):
         ordering = ("created_at",)
 
 
-class Comment(models.Model):
-    report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name="comments")
-    citizen = models.ForeignKey(Citizen, on_delete=models.CASCADE, related_name="comments")
-    message = models.TextField()
-    created_at = models.DateTimeField(default=timezone.now)
-
-    class Meta:
-        ordering = ("created_at",)
-
-
 class StatusHistory(models.Model):
     report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name="status_history")
     previous_status = models.CharField(max_length=20, choices=ReportStatus.choices)
     new_status = models.CharField(max_length=20, choices=ReportStatus.choices)
     changed_by = models.ForeignKey(
-        Administrator,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

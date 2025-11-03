@@ -1,1087 +1,1305 @@
-﻿{
-	"info": {
-		"_postman_id": "0a74c5f2-6ca2-4716-b331-b3061945b92d",
-		"name": "City Care API",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "44256885",
-		"_collection_link": "https://victor-5054430.postman.co/workspace/Victor's-Workspace~04b85c69-2181-4f98-888a-253e2adddec1/collection/44256885-0a74c5f2-6ca2-4716-b331-b3061945b92d?action=share&source=collection_link&creator=44256885"
-	},
-	"item": [
-		{
-			"name": "Citizen",
-			"item": [
-				{
-					"name": "Citizen Register",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "X-USER",
-								"value": "{{api_user}}"
-							},
-							{
-								"key": "X-APP",
-								"value": "{{api_app}}"
-							},
-							{
-								"key": "X-SIGNATURE",
-								"value": "{{api_signature}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"cidadÃƒÂ£o@example.com\",\n  \"full_name\": \"Fulano da Silva\",\n  \"phone\": \"11999999999\",\n  \"password\": \"senhaSegura123\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/auth/citizens/register",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"citizens",
-								"register"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Citizen Token",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test('Token de cidadÃƒÂ£o retornado com sucesso', function () {",
-									"  pm.response.to.have.status(200);",
-									"  const json = pm.response.json();",
-									"  pm.expect(json).to.have.property('access');",
-									"  pm.expect(json).to.have.property('refresh');",
-									"  pm.environment.set('access_token', json.access);",
-									"  pm.environment.set('refresh_token', json.refresh);",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "X-USER",
-								"value": "{{api_user}}"
-							},
-							{
-								"key": "X-APP",
-								"value": "{{api_app}}"
-							},
-							{
-								"key": "X-SIGNATURE",
-								"value": "{{api_signature}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"cidadao@email.com\",\n  \"password\": \"senhaSegura123\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/auth/citizens/token",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"citizens",
-								"token"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Citizen Token Copy",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test('Token de cidadÃƒÂ£o retornado com sucesso', function () {",
-									"  pm.response.to.have.status(200);",
-									"  const json = pm.response.json();",
-									"  pm.expect(json).to.have.property('access');",
-									"  pm.expect(json).to.have.property('refresh');",
-									"  pm.environment.set('access_token', json.access);",
-									"  pm.environment.set('refresh_token', json.refresh);",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "X-USER",
-								"value": "{{api_user}}"
-							},
-							{
-								"key": "X-APP",
-								"value": "{{api_app}}"
-							},
-							{
-								"key": "X-SIGNATURE",
-								"value": "{{api_signature}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"cidadao@email.com\",\n  \"password\": \"senhaSegura123\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/auth/citizens/token",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"citizens",
-								"token"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Admin",
-			"item": [
-				{
-					"name": "Category",
-					"item": [
-						{
-							"name": "Create Category",
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{admin_access_token}}"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"name\": \"Iluminacao Publica\",\n  \"slug\": \"iluminacao-publica\",\n  \"description\": \"Lampadas queimadas\",\n  \"department_id\": 1\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/api/categories/",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"categories",
-										""
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Update Category (PUT)",
-							"request": {
-								"method": "PUT",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{admin_access_token}}"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"name\": \"IluminaÃ§Ã£o PÃºblica\",\n  \"slug\": \"iluminacao-publica\",\n  \"description\": \"IluminaÃ§Ã£o em vias pÃºblicas\",\n  \"department_id\": 1\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/api/categories/{{category_id}}/",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"categories",
-										"{{category_id}}",
-										""
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Update Category (PATCH)",
-							"request": {
-								"method": "PATCH",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{admin_access_token}}"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"name\": \"IluminaÃ§Ã£o PÃºblica\",\n  \"slug\": \"iluminacao-publica\",\n  \"description\": \"IluminaÃ§Ã£o em vias pÃºblicas\",\n  \"department_id\": 1\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/api/categories/{{category_id}}/",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"categories",
-										"{{category_id}}",
-										""
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Delete Category",
-							"request": {
-								"method": "DELETE",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{admin_access_token}}"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"url": {
-									"raw": "{{base_url}}/api/categories/{{category_id}}/",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"categories",
-										"{{category_id}}",
-										""
-									]
-								}
-							},
-							"response": []
-						}
-					]
-				},
-				{
-					"name": "Tag",
-					"item": [
-						{
-							"name": "Create Tag",
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{admin_access_token}}"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"name\": \"urgente\",\n  \"slug\": \"urgente\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/api/tags/",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"tags",
-										""
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Update Tag (PUT)",
-							"request": {
-								"method": "PUT",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{admin_access_token}}"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"name\": \"urgente\",\n  \"slug\": \"urgente\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/api/tags/{{tag_id}}/",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"tags",
-										"{{tag_id}}",
-										""
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Update Tag (PATCH)",
-							"request": {
-								"method": "PATCH",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{admin_access_token}}"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"name\": \"urgente\",\n  \"slug\": \"urgente\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/api/tags/{{tag_id}}/",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"tags",
-										"{{tag_id}}",
-										""
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Delete Tag",
-							"request": {
-								"method": "DELETE",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{admin_access_token}}"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"url": {
-									"raw": "{{base_url}}/api/tags/{{tag_id}}/",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"tags",
-										"{{tag_id}}",
-										""
-									]
-								}
-							},
-							"response": []
-						}
-					]
-				},
-				{
-					"name": "Departament",
-					"item": [
-						{
-							"name": "Create Department",
-							"request": {
-								"method": "POST",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{admin_access_token}}"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"name\": \"Obras\",\n  \"email\": \"obras@prefeitura.gov\",\n  \"phone\": \"11 9999-9999\",\n  \"description\": \"Depto de Obras\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/api/departments/",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"departments",
-										""
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Update Department (PUT)",
-							"request": {
-								"method": "PUT",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{admin_access_token}}"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"name\": \"Obras e ManutenÃ§Ãµes\",\n  \"phone\": \"11 9888-7777\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/api/departments/{{department_id}}/",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"departments",
-										"{{department_id}}",
-										""
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Update Department (PATCH)",
-							"request": {
-								"method": "PATCH",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{admin_access_token}}"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"body": {
-									"mode": "raw",
-									"raw": "{\n  \"name\": \"Obras e ManutenÃ§Ãµes\",\n  \"phone\": \"11 9888-7777\"\n}"
-								},
-								"url": {
-									"raw": "{{base_url}}/api/departments/{{department_id}}/",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"departments",
-										"{{department_id}}",
-										""
-									]
-								}
-							},
-							"response": []
-						},
-						{
-							"name": "Delete Department",
-							"request": {
-								"method": "DELETE",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "Bearer {{admin_access_token}}"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"url": {
-									"raw": "{{base_url}}/api/departments/{{department_id}}/",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"departments",
-										"{{department_id}}",
-										""
-									]
-								}
-							},
-							"response": []
-						}
-					]
-				},
-				{
-					"name": "Admin Register",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "X-USER",
-								"value": "{{api_user}}"
-							},
-							{
-								"key": "X-APP",
-								"value": "{{api_app}}"
-							},
-							{
-								"key": "X-SIGNATURE",
-								"value": "{{api_signature}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"admin@example.com\",\n  \"first_name\": \"Admin\",\n  \"last_name\": \"City\",\n  \"password\": \"senhaSegura123\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/auth/admins/register",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"admins",
-								"register"
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Admin Token",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test('Token de admin retornado com sucesso', function () {",
-									"  pm.response.to.have.status(200);",
-									"  const json = pm.response.json();",
-									"  pm.expect(json).to.have.property('access');",
-									"  pm.environment.set('admin_access_token', json.access);",
-									"});"
-								],
-								"type": "text/javascript",
-								"packages": {},
-								"requests": {}
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							},
-							{
-								"key": "X-USER",
-								"value": "{{api_user}}"
-							},
-							{
-								"key": "X-APP",
-								"value": "{{api_app}}"
-							},
-							{
-								"key": "X-SIGNATURE",
-								"value": "{{api_signature}}"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"superadmin\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/auth/admins/token",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"auth",
-								"admins",
-								"token"
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Category",
-			"item": [
-				{
-					"name": "List Categories",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/categories/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"categories",
-								""
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Category Detail",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/categories/{{category_id}}/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"categories",
-								"{{category_id}}",
-								""
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Departments",
-			"item": [
-				{
-					"name": "List Departments",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/departments/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"departments",
-								""
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Department Detail",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/departments/{{department_id}}/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"departments",
-								"{{department_id}}",
-								""
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Tags",
-			"item": [
-				{
-					"name": "List Tags",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/tags/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"tags",
-								""
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Tag Detail",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/tags/{{tag_id}}/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"tags",
-								"{{tag_id}}",
-								""
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Report",
-			"item": [
-				{
-					"name": "Create Report",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							}
-						],
-						"body": {
-							"mode": "formdata",
-							"formdata": [
-								{
-									"key": "category_id",
-									"value": "1",
-									"type": "text"
-								},
-								{
-									"key": "title",
-									"value": "Buraco perigoso na avenida",
-									"type": "text"
-								},
-								{
-									"key": "description",
-									"value": "Existe um buraco profundo no asfalto.",
-									"type": "text"
-								},
-								{
-									"key": "priority",
-									"value":"ALTO",
-									"type": "text"
-								},
-								{
-									"key": "address",
-									"value": "Rua Central, 100",
-									"type": "text"
-								},
-								{
-									"key": "neighborhood",
-									"value": "Centro",
-									"type": "text"
-								},
-								{
-									"key": "latitude",
-									"value": "-23.550520",
-									"type": "text"
-								},
-								{
-									"key": "longitude",
-									"value": "-46.633308",
-									"type": "text"
-								},
-								{
-									"key": "tags",
-									"value": "1",
-									"type": "text"
-								},
-								{
-									"key": "attachments",
-									"type": "file",
-									"src": []
-								}
-							]
-						},
-						"url": {
-							"raw": "{{base_url}}/api/reports/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"reports",
-								""
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "List Reports",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/reports/?status=ABERTO",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"reports",
-								""
-							],
-							"query": [
-								{
-									"key": "status",
-									"value": "ABERTO",
-									"description": "Filtro opcional por status"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Report Detail",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							}
-						],
-						"url": {
-							"raw": "{{base_url}}/api/reports/{{report_id}}/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"reports",
-								"{{report_id}}",
-								""
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "Add Comment",
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Authorization",
-								"value": "Bearer {{access_token}}"
-							},
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n  \"message\": \"Preciso de atualizaÃ§Ã£o\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/reports/{{report_id}}/comments/",
-							"host": [
-								"{{base_url}}"
-							],
-							"path": [
-								"api",
-								"reports",
-								"{{report_id}}",
-								"comments",
-								""
-							]
-						}
-					},
-					"response": []
-				}
-			]
-		},
-		{
-			"name": "Eligible for Ignore",
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Authorization",
-						"value": "Bearer {{access_token}}"
-					}
-				],
-				"url": {
-					"raw": "{{base_url}}/api/reports/eligibles-ignore?hours=168",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"api",
-						"reports",
-						"eligibles-ignore"
-					],
-					"query": [
-						{
-							"key": "hours",
-							"value": "168"
-						}
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Average Resolution",
-			"request": {
-				"method": "GET",
-				"header": [ {"key":"Authorization","value":"Bearer {{admin_access_token}}"}
-				],
-				"url": {
-					"raw": "{{base_url}}/api/reports/avg-resolution/",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"api",
-						"reports",
-						"avg-resolution",
-						""
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Dashboard Overview",
-			"request": {
-				"method": "GET",
-				"header": [ {"key":"Authorization","value":"Bearer {{admin_access_token}}"}
-				],
-				"url": {
-					"raw": "{{base_url}}/api/dashboard/",
-					"host": [
-						"{{base_url}}"
-					],
-					"path": [
-						"api",
-						"dashboard",
-						""
-					]
-				}
-			},
-			"response": []
-		}
-	]
+{
+    "info": {
+        "_postman_id": "0a74c5f2-6ca2-4716-b331-b3061945b92d",
+        "name": "City Care API",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Citizen",
+                    "item": [
+                        {
+                            "name": "Citizen Register",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "X-USER",
+                                        "value": "{{api_user}}"
+                                    },
+                                    {
+                                        "key": "X-APP",
+                                        "value": "{{api_app}}"
+                                    },
+                                    {
+                                        "key": "X-SIGNATURE",
+                                        "value": "{{api_signature}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/auth/citizens/register",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "citizens",
+                                        "register"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"email\": \"citizen@example.com\",\n  \"first_name\": \"Fulano\",\n  \"last_name\": \"Silva\",\n  \"phone\": \"11999999999\",\n  \"password\": \"SenhaSegura123\",\n  \"city_id\": \"{{city_id}}\"\n}"
+                                }
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Citizen registered', function () {",
+                                            "  pm.response.to.have.status(201);",
+                                            "  var json = pm.response.json();",
+                                            "  pm.expect(json).to.have.property('id');",
+                                            "});"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Citizen Token",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "X-USER",
+                                        "value": "{{api_user}}"
+                                    },
+                                    {
+                                        "key": "X-APP",
+                                        "value": "{{api_app}}"
+                                    },
+                                    {
+                                        "key": "X-SIGNATURE",
+                                        "value": "{{api_signature}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/auth/citizens/token",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "citizens",
+                                        "token"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"email\": \"citizen@example.com\",\n  \"password\": \"SenhaSegura123\"\n}"
+                                }
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Citizen token generated', function () {",
+                                            "  pm.response.to.have.status(200);",
+                                            "  var json = pm.response.json();",
+                                            "  pm.environment.set('citizen_refresh_token', json.refresh);",
+                                            "  pm.environment.set('citizen_access_token', json.access);",
+                                            "});"
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "name": "Employee",
+                    "item": [
+                        {
+                            "name": "Employee Register",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "X-USER",
+                                        "value": "{{api_user}}"
+                                    },
+                                    {
+                                        "key": "X-APP",
+                                        "value": "{{api_app}}"
+                                    },
+                                    {
+                                        "key": "X-SIGNATURE",
+                                        "value": "{{api_signature}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/auth/employees/register",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "employees",
+                                        "register"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"email\": \"employee@example.com\",\n  \"first_name\": \"Ana\",\n  \"last_name\": \"Souza\",\n  \"password\": \"SenhaSegura123\",\n  \"organization_id\": \"{{organization_id}}\",\n  \"group_ids\": [\n    \"{{group_id}}\"\n  ]\n}"
+                                }
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Employee registered', function () {",
+                                            "  pm.response.to.have.status(201);",
+                                            "  var json = pm.response.json();",
+                                            "  pm.expect(json).to.have.property('id');",
+                                            "});"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Employee Token",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "X-USER",
+                                        "value": "{{api_user}}"
+                                    },
+                                    {
+                                        "key": "X-APP",
+                                        "value": "{{api_app}}"
+                                    },
+                                    {
+                                        "key": "X-SIGNATURE",
+                                        "value": "{{api_signature}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/auth/employees/token",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "auth",
+                                        "employees",
+                                        "token"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"email\": \"employee@example.com\",\n  \"password\": \"SenhaSegura123\"\n}"
+                                }
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Employee token generated', function () {",
+                                            "  pm.response.to.have.status(200);",
+                                            "  var json = pm.response.json();",
+                                            "  pm.environment.set('employee_refresh_token', json.refresh);",
+                                            "  pm.environment.set('employee_access_token', json.access);",
+                                            "});"
+                                        ]
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Locations",
+            "item": [
+                {
+                    "name": "States",
+                    "item": [
+                        {
+                            "name": "List States",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/states",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "states"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Create State",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/states",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "states"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"Sao Paulo\",\n  \"abbreviation\": \"SP\"\n}"
+                                }
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('State created', function () {",
+                                            "  pm.response.to.have.status(201);",
+                                            "  var json = pm.response.json();",
+                                            "  pm.environment.set('state_id', json.id);",
+                                            "});"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Get State",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/states/{{state_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "states",
+                                        "{{state_id}}"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Update State",
+                            "request": {
+                                "method": "PATCH",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/states/{{state_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "states",
+                                        "{{state_id}}"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"Updated State\"\n}"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Delete State",
+                            "request": {
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/states/{{state_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "states",
+                                        "{{state_id}}"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Cities",
+                    "item": [
+                        {
+                            "name": "List Cities",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/cities",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "cities"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Create City",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/cities",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "cities"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"Sao Paulo\",\n  \"state_id\": \"{{state_id}}\"\n}"
+                                }
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('City created', function () {",
+                                            "  pm.response.to.have.status(201);",
+                                            "  var json = pm.response.json();",
+                                            "  pm.environment.set('city_id', json.id);",
+                                            "});"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Get City",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/cities/{{city_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "cities",
+                                        "{{city_id}}"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Update City",
+                            "request": {
+                                "method": "PATCH",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/cities/{{city_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "cities",
+                                        "{{city_id}}"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"Updated City\"\n}"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Delete City",
+                            "request": {
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/cities/{{city_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "cities",
+                                        "{{city_id}}"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Organizations",
+                    "item": [
+                        {
+                            "name": "List Organizations",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/organizations",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "organizations"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Create Organization",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/organizations",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "organizations"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"Prefeitura Sao Paulo\",\n  \"city_id\": \"{{city_id}}\"\n}"
+                                }
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Organization created', function () {",
+                                            "  pm.response.to.have.status(201);",
+                                            "  var json = pm.response.json();",
+                                            "  pm.environment.set('organization_id', json.id);",
+                                            "});"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Get Organization",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/organizations/{{organization_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "organizations",
+                                        "{{organization_id}}"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Update Organization",
+                            "request": {
+                                "method": "PATCH",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/organizations/{{organization_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "organizations",
+                                        "{{organization_id}}"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"Updated Organization\"\n}"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Delete Organization",
+                            "request": {
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/organizations/{{organization_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "organizations",
+                                        "{{organization_id}}"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Catalog",
+            "item": [
+                {
+                    "name": "Departments",
+                    "item": [
+                        {
+                            "name": "List Departments",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/departments",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "departments"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Create Department",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/departments",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "departments"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"Obras\",\n  \"email\": \"obras@citycare.gov\",\n  \"phone\": \"1199999999\",\n  \"description\": \"Public works department\"\n}"
+                                }
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Department created', function () {",
+                                            "  pm.response.to.have.status(201);",
+                                            "  var json = pm.response.json();",
+                                            "  pm.environment.set('department_id', json.id);",
+                                            "});"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Get Department",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/departments/{{department_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "departments",
+                                        "{{department_id}}"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Update Department",
+                            "request": {
+                                "method": "PATCH",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/departments/{{department_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "departments",
+                                        "{{department_id}}"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"description\": \"Department updated\"\n}"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Delete Department",
+                            "request": {
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/departments/{{department_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "departments",
+                                        "{{department_id}}"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Categories",
+                    "item": [
+                        {
+                            "name": "List Categories",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/categories",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "categories"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Create Category",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/categories",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "categories"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"Buracos\",\n  \"slug\": \"buracos\",\n  \"description\": \"Road maintenance category\",\n  \"department_id\": \"{{department_id}}\"\n}"
+                                }
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Category created', function () {",
+                                            "  pm.response.to.have.status(201);",
+                                            "  var json = pm.response.json();",
+                                            "  pm.environment.set('category_id', json.id);",
+                                            "});"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Get Category",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/categories/{{category_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "categories",
+                                        "{{category_id}}"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Update Category",
+                            "request": {
+                                "method": "PATCH",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/categories/{{category_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "categories",
+                                        "{{category_id}}"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"description\": \"Category updated\"\n}"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Delete Category",
+                            "request": {
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/categories/{{category_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "categories",
+                                        "{{category_id}}"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                },
+                {
+                    "name": "Tags",
+                    "item": [
+                        {
+                            "name": "List Tags",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/tags",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "tags"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Create Tag",
+                            "request": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/tags",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "tags"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"Buraco\",\n  \"slug\": \"buraco\"\n}"
+                                }
+                            },
+                            "response": [],
+                            "event": [
+                                {
+                                    "listen": "test",
+                                    "script": {
+                                        "type": "text/javascript",
+                                        "exec": [
+                                            "pm.test('Tag created', function () {",
+                                            "  pm.response.to.have.status(201);",
+                                            "  var json = pm.response.json();",
+                                            "  pm.environment.set('tag_id', json.id);",
+                                            "});"
+                                        ]
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "name": "Get Tag",
+                            "request": {
+                                "method": "GET",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/tags/{{tag_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "tags",
+                                        "{{tag_id}}"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Update Tag",
+                            "request": {
+                                "method": "PATCH",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/tags/{{tag_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "tags",
+                                        "{{tag_id}}"
+                                    ]
+                                },
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"name\": \"Updated Tag\"\n}"
+                                }
+                            },
+                            "response": []
+                        },
+                        {
+                            "name": "Delete Tag",
+                            "request": {
+                                "method": "DELETE",
+                                "header": [
+                                    {
+                                        "key": "Authorization",
+                                        "value": "Bearer {{employee_access_token}}"
+                                    }
+                                ],
+                                "url": {
+                                    "raw": "{{base_url}}/api/tags/{{tag_id}}",
+                                    "host": [
+                                        "{{base_url}}"
+                                    ],
+                                    "path": [
+                                        "api",
+                                        "tags",
+                                        "{{tag_id}}"
+                                    ]
+                                }
+                            },
+                            "response": []
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Reports",
+            "item": [
+                {
+                    "name": "Create Report",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{citizen_access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/reports",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "reports"
+                            ]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"category_id\": \"{{category_id}}\",\n  \"title\": \"Buraco perigoso\",\n  \"description\": \"Ha um buraco grande na rua principal.\",\n  \"priority\": \"MODERADO\",\n  \"address\": \"Rua A, 123\",\n  \"neighborhood\": \"Centro\",\n  \"latitude\": -23.0,\n  \"longitude\": -46.0,\n  \"tags\": [\n    \"{{tag_id}}\"\n  ]\n}"
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Report created', function () {",
+                                    "  pm.response.to.have.status(201);",
+                                    "  var json = pm.response.json();",
+                                    "  pm.environment.set('report_id', json.id);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "List Reports (Citizen)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{citizen_access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/reports",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "reports"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "List Reports (Employee)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{employee_access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/reports",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "reports"
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Get Report",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{employee_access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/reports/{{report_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "reports",
+                                "{{report_id}}"
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ]
 }

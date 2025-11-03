@@ -3,12 +3,13 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Iterable
 
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from accounts.models import Administrator, Citizen
+from accounts.models import Citizen, Employee
 from core.repositories import report_repository
-from core.reports.models import Report, ReportStatus, StatusHistory, Tag
+from core.reports.models import Report, ReportPriority, ReportStatus, StatusHistory, Tag
 
 
 class InvalidStatusTransition(Exception):
@@ -50,24 +51,32 @@ class ReportService:
     ) -> Report:
         with transaction.atomic():
             if Report.objects.filter(category=category, latitude=latitude, longitude=longitude).exists():
-                from django.core.exceptions import ValidationError
-
                 raise ValidationError({
                     "non_field_errors": [
-                        "Já existe uma ocorrência para esta categoria neste mesmo ponto (lat/lng).",
+                        "Ja existe uma ocorrencia para esta categoria neste mesmo ponto (lat/lng).",
                     ]
                 })
 
-            default_admin = Administrator.objects.order_by("id").first()
+            organization = getattr(citizen.city, "organization", None)
+            if organization is None:
+                raise ValidationError({"organization": "No organization configured for the citizen city."})
+
+            default_employee = organization.employees.order_by("id").first()
+
+            attachments_list = list(attachments or [])
+            effective_priority = priority
+            if not attachments_list:
+                effective_priority = ReportPriority.LOW
 
             report = Report(
                 citizen=citizen,
                 category=category,
                 department=department,
-                assigned_to=default_admin,
+                organization=organization,
+                assigned_to=default_employee,
                 title=title,
                 description=description,
-                priority=priority,
+                priority=effective_priority,
                 address=address,
                 neighborhood=neighborhood,
                 latitude=latitude,
@@ -77,15 +86,15 @@ class ReportService:
             report.save()
             if tags:
                 report.tags.set(tags)
-            for attachment in attachments or []:
+            for attachment in attachments_list:
                 report.attachments.create(file=attachment, description=getattr(attachment, "description", ""))
 
             StatusHistory.objects.create(
                 report=report,
                 previous_status=ReportStatus.ABERTO,
                 new_status=ReportStatus.ABERTO,
-                changed_by=default_admin,
-                notes="Atribuição inicial",
+                changed_by=default_employee,
+                notes="Atribuicao inicial",
             )
         return report
 
@@ -95,12 +104,12 @@ class ReportService:
         report_id: int,
         new_status: str,
         *,
-        administrator: Administrator,
+        employee: Employee,
         notes: str = "",
         denied_reason: str | None = None,
     ) -> StatusTransitionResult:
         if new_status not in ReportStatus.values:
-            raise InvalidStatusTransition("Status de destino inválido.")
+            raise InvalidStatusTransition("Status de destino invalido.")
 
         with transaction.atomic():
             report = (
@@ -110,10 +119,10 @@ class ReportService:
             )
             allowed_targets = cls.ALLOWED_TRANSITIONS.get(report.status, set())
             if new_status not in allowed_targets:
-                raise InvalidStatusTransition("Transição não permitida para o status informado.")
+                raise InvalidStatusTransition("Transicao nao permitida para o status informado.")
 
             if new_status == ReportStatus.INDEFERIDO and not denied_reason:
-                raise InvalidStatusTransition("Motivo é obrigatório para indeferir.")
+                raise InvalidStatusTransition("Motivo e obrigatorio para indeferir.")
 
             now = timezone.now()
             previous_status = report.status
@@ -130,7 +139,7 @@ class ReportService:
                 report=report,
                 previous_status=previous_status,
                 new_status=new_status,
-                changed_by=administrator,
+                changed_by=employee,
                 notes=notes,
             )
         return StatusTransitionResult(report=report, history=history)

@@ -2,11 +2,12 @@ from __future__ import annotations
 
 from datetime import timedelta
 
+from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.utils import timezone
 
-from accounts.models import Administrator, Citizen
+from accounts.models import City, Citizen, Employee, Organization, State
 from core.repositories import report_repository
 from core.reports.models import Category, Department, Report, ReportStatus, Tag
 from core.services.report_service import InvalidStatusTransition, ReportService
@@ -14,6 +15,9 @@ from core.services.report_service import InvalidStatusTransition, ReportService
 
 class ReportServiceTests(TestCase):
     def setUp(self):
+        self.state = State.objects.create(name="Sao Paulo", abbreviation="SP")
+        self.city = City.objects.create(name="Sao Paulo", state=self.state)
+        self.organization = Organization.objects.create(name="Prefeitura Sao Paulo", city=self.city)
         self.department = Department.objects.create(name="Obras", email="obras@citycare.gov", phone="1199999999")
         self.category = Category.objects.create(
             department=self.department,
@@ -25,18 +29,25 @@ class ReportServiceTests(TestCase):
         self.tag_urgent = Tag.objects.create(name="Urgente", slug="urgente")
         self.citizen = Citizen.objects.create(
             email="citizen@example.com",
-            full_name="Fulano",
+            first_name="Fulano",
+            last_name="Silva",
             phone="11988887777",
             password="pbkdf2_sha256$260000$dummy$ZVd5Q3g=",
             is_active=True,
+            city=self.city,
         )
         self.citizen.set_password("SenhaSegura123")
         self.citizen.save()
-        self.admin = Administrator.objects.create_superuser(
-            email="admin@citycare.gov",
+
+        # Ensure at least one group exists for employees
+        self.default_group = Group.objects.create(name="Default")
+        self.employee = Employee.objects.create_superuser(
+            email="employee@citycare.gov",
             password="SenhaSegura123",
-            first_name="Admin",
+            first_name="Employee",
+            organization=self.organization,
         )
+        self.employee.groups.add(self.default_group)
 
     def test_full_status_flow(self):
         file_data = SimpleUploadedFile("foto.jpg", b"fake-image", content_type="image/jpeg")
@@ -44,8 +55,8 @@ class ReportServiceTests(TestCase):
             citizen=self.citizen,
             category=self.category,
             department=self.department,
-            title="Buraco perigoso próximo à escola",
-            description="Há um buraco profundo próximo à escola municipal.",
+            title="Buraco perigoso proximo a escola",
+            description="Ha um buraco profundo proximo a escola municipal.",
             priority="ALTA",
             address="Rua A, 123",
             neighborhood="Centro",
@@ -55,13 +66,14 @@ class ReportServiceTests(TestCase):
             attachments=[file_data],
         )
 
-        ReportService.transition_status(report.id, ReportStatus.ANALISANDO, administrator=self.admin)
-        ReportService.transition_status(report.id, ReportStatus.DEFERIDO, administrator=self.admin)
-        ReportService.transition_status(report.id, ReportStatus.EM_ANDAMENTO, administrator=self.admin)
-        result = ReportService.transition_status(report.id, ReportStatus.CONCLUIDO, administrator=self.admin)
+        ReportService.transition_status(report.id, ReportStatus.ANALISANDO, employee=self.employee)
+        ReportService.transition_status(report.id, ReportStatus.DEFERIDO, employee=self.employee)
+        ReportService.transition_status(report.id, ReportStatus.EM_ANDAMENTO, employee=self.employee)
+        result = ReportService.transition_status(report.id, ReportStatus.CONCLUIDO, employee=self.employee)
 
         report.refresh_from_db()
         self.assertEqual(report.status, ReportStatus.CONCLUIDO)
+        self.assertEqual(report.organization, self.organization)
         self.assertEqual(report.attachments.count(), 1)
         self.assertEqual(report.tags.count(), 2)
         self.assertEqual(result.history.new_status, ReportStatus.CONCLUIDO)
@@ -72,8 +84,8 @@ class ReportServiceTests(TestCase):
             citizen=self.citizen,
             category=self.category,
             department=self.department,
-            title="Solicitação de poda",
-            description="Poda necessária.",
+            title="Solicitacao de poda",
+            description="Poda necessaria.",
             priority="MEDIA",
             address="Rua B, 456",
             neighborhood="Centro",
@@ -83,15 +95,16 @@ class ReportServiceTests(TestCase):
             attachments=[],
         )
 
-        ReportService.transition_status(report.id, ReportStatus.ANALISANDO, administrator=self.admin)
+        ReportService.transition_status(report.id, ReportStatus.ANALISANDO, employee=self.employee)
         with self.assertRaises(InvalidStatusTransition):
-            ReportService.transition_status(report.id, ReportStatus.INDEFERIDO, administrator=self.admin)
+            ReportService.transition_status(report.id, ReportStatus.INDEFERIDO, employee=self.employee)
 
     def test_repository_ignore_query(self):
         report = Report.objects.create(
             citizen=self.citizen,
             category=self.category,
             department=self.department,
+            organization=self.organization,
             title="Buraco sem resposta",
             description="Sem retorno",
             priority="BAIXA",
@@ -114,7 +127,7 @@ class ReportServiceTests(TestCase):
             category=self.category,
             department=self.department,
             title="Fios soltos",
-            description="Fios caídos na rua",
+            description="Fios caidos na rua",
             priority="MEDIA",
             address="Rua D, 321",
             neighborhood="Vila",
@@ -124,5 +137,6 @@ class ReportServiceTests(TestCase):
             attachments=[file_one, file_two],
         )
 
+        self.assertEqual(report.organization, self.organization)
         self.assertEqual(report.tags.count(), 2)
         self.assertEqual(report.attachments.count(), 2)

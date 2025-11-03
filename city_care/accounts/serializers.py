@@ -1,34 +1,23 @@
 from __future__ import annotations
 
 from django.conf import settings
+from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from .models import Administrator, Citizen
-from core.api.tokens import AdminRefreshToken, CitizenRefreshToken
+from .models import City, Citizen, Employee, Organization, State
+from core.api.tokens import CitizenRefreshToken, EmployeeRefreshToken
 
 
 class SecurityHeadersMixin:
-    """Valida o trio de cabeçalhos definidos no .env.
-
-    Observação: o Django/DRF normaliza nomes de cabeçalho para o formato com hífens
-    (ex.: "X-USER"). Para evitar falsos negativos, aceitamos tanto "X-USER" quanto
-    a variante com underscore ("X_USER").
-    """
+    """Valida o trio de cabecalhos definidos no .env."""
 
     def _get_header(self, request, name: str) -> str | None:
-        """Obtém um cabeçalho de forma robusta.
-
-        - Tenta o nome com hífen via `request.headers` (case-insensitive).
-        - Faz fallback para a variante com underscore via `request.META`.
-        """
-        # Preferido: formato com hífen em `request.headers`
         value = request.headers.get(name)
         if value:
             return value
-        # Fallback: tentar variante com underscore em META
         meta_key = "HTTP_" + name.upper().replace("-", "_")
         return request.META.get(meta_key)
 
@@ -37,13 +26,10 @@ class SecurityHeadersMixin:
         expected_app = settings.API_SECURITY_APP
         expected_signature = settings.API_SECURITY_SIGNATURE
 
-        # Leia nos formatos com hífen (preferido); aceita underscore como fallback
         provided_user = self._get_header(request, "X-USER")
         provided_app = self._get_header(request, "X-APP")
         provided_signature = self._get_header(request, "X-SIGNATURE")
 
-        # Mantemos a nomenclatura com underscore na mensagem para
-        # consistência com a documentação existente (README/Postman).
         missing = [
             header
             for header, value in {
@@ -54,42 +40,80 @@ class SecurityHeadersMixin:
             if not value
         ]
         if missing:
-            raise serializers.ValidationError(
-                {"detail": f"Cabeçalhos obrigatórios ausentes: {', '.join(missing)}"}
-            )
+            raise serializers.ValidationError({"detail": f"Cabecalhos obrigatorios ausentes: {', '.join(missing)}"})
 
         if (
             provided_user != expected_user
             or provided_app != expected_app
             or provided_signature != expected_signature
         ):
-            raise serializers.ValidationError(
-                {"detail": "Cabeçalhos de autorização inválidos."}
-            )
+            raise serializers.ValidationError({"detail": "Cabecalhos de autorizacao invalidos."})
+
+
+class StateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = State
+        fields = ["id", "name", "abbreviation"]
+        read_only_fields = ["id"]
+
+
+class CitySerializer(serializers.ModelSerializer):
+    state = StateSerializer(read_only=True)
+    state_id = serializers.PrimaryKeyRelatedField(
+        source="state",
+        queryset=State.objects.all(),
+        write_only=True,
+        required=True,
+    )
+
+    class Meta:
+        model = City
+        fields = ["id", "name", "state", "state_id"]
+        read_only_fields = ["id", "state"]
+
+
+class OrganizationSerializer(serializers.ModelSerializer):
+    city = CitySerializer(read_only=True)
+    city_id = serializers.PrimaryKeyRelatedField(
+        source="city",
+        queryset=City.objects.select_related("state"),
+        write_only=True,
+        required=True,
+    )
+    state = StateSerializer(source="city.state", read_only=True)
+
+    class Meta:
+        model = Organization
+        fields = ["id", "name", "city", "city_id", "state", "created_at", "updated_at"]
+        read_only_fields = ["id", "city", "state", "created_at", "updated_at"]
 
 
 class CitizenRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
-    # Aceita emails com Unicode e mantém unicidade
     email = serializers.CharField(
         validators=[
-            UniqueValidator(queryset=Citizen.objects.all(), message="Email já cadastrado."),
+            UniqueValidator(queryset=Citizen.objects.all(), message="Email ja cadastrado."),
         ]
+    )
+    city = CitySerializer(read_only=True)
+    city_id = serializers.PrimaryKeyRelatedField(
+        source="city",
+        queryset=City.objects.select_related("state"),
+        write_only=True,
     )
 
     class Meta:
         model = Citizen
-        fields = ("id", "email", "full_name", "phone", "password")
-        read_only_fields = ("id",)
+        fields = ("id", "email", "first_name", "last_name", "phone", "password", "city", "city_id")
+        read_only_fields = ("id", "city")
 
     def validate_email(self, value: str) -> str:
         import re
 
         value = (value or "").strip()
-        # Validação mínima e permissiva (Unicode): <algo>@<algo>.<algo>
         pattern = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
         if not pattern.match(value):
-            raise serializers.ValidationError("Insira um endereço de email válido.")
+            raise serializers.ValidationError("Insira um endereco de email valido.")
         return value
 
     def create(self, validated_data):
@@ -97,12 +121,10 @@ class CitizenRegistrationSerializer(serializers.ModelSerializer):
         citizen = Citizen(**validated_data)
         citizen.set_password(password)
         try:
-            # Evita reprovar emails com Unicode pelo EmailField do Model; os
-            # demais campos continuam validados.
             citizen.full_clean(exclude=["email"])
             citizen.save()
         except IntegrityError as exc:
-            raise serializers.ValidationError({"detail": "Email já cadastrado."}) from exc
+            raise serializers.ValidationError({"detail": "Email ja cadastrado."}) from exc
         except ValidationError as exc:
             raise serializers.ValidationError(exc.message_dict) from exc
         return citizen
@@ -115,21 +137,20 @@ class CitizenTokenSerializer(serializers.Serializer):
     access = serializers.CharField(read_only=True)
 
     def validate(self, attrs):
-        # Normaliza e valida email com verificação mínima (Unicode permitido)
         import re
 
         email = (attrs.get("email") or "").strip()
         pattern = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
         if not pattern.match(email):
-            raise serializers.ValidationError({"email": "Insira um endereço de email válido."})
+            raise serializers.ValidationError({"email": "Insira um endereco de email valido."})
         password = attrs["password"]
         try:
             citizen = Citizen.objects.get(email=email, is_active=True)
-        except Citizen.DoesNotExist as exc:  # pragma: no cover - mensagem uniforme
-            raise serializers.ValidationError({"detail": "Credenciais inválidas."}) from exc
+        except Citizen.DoesNotExist as exc:
+            raise serializers.ValidationError({"detail": "Credenciais invalidas."}) from exc
 
         if not citizen.check_password(password):
-            raise serializers.ValidationError({"detail": "Credenciais inválidas."})
+            raise serializers.ValidationError({"detail": "Credenciais invalidas."})
 
         refresh = CitizenRefreshToken.for_citizen(citizen)
         attrs["refresh"] = str(refresh)
@@ -137,23 +158,50 @@ class CitizenTokenSerializer(serializers.Serializer):
         return attrs
 
 
-class AdministratorRegistrationSerializer(serializers.ModelSerializer):
+class EmployeeRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
+    organization_id = serializers.PrimaryKeyRelatedField(
+        source="organization",
+        queryset=Organization.objects.select_related("city__state"),
+        write_only=True,
+    )
+    organization = OrganizationSerializer(read_only=True)
+    groups = serializers.SlugRelatedField(many=True, slug_field="name", read_only=True)
+    group_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=Group.objects.all(),
+        write_only=True,
+        source="groups",
+    )
 
     class Meta:
-        model = Administrator
-        fields = ("id", "email", "first_name", "last_name", "password")
-        read_only_fields = ("id",)
+        model = Employee
+        fields = (
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "password",
+            "organization",
+            "organization_id",
+            "groups",
+            "group_ids",
+        )
+        read_only_fields = ("id", "organization")
 
     def create(self, validated_data):
+        groups = validated_data.pop("groups", [])
         password = validated_data.pop("password")
         with transaction.atomic():
-            # Cria como superuser para acesso completo ao Django Admin
-            admin = Administrator.objects.create_superuser(password=password, **validated_data)
-        return admin
+            employee = Employee.objects.create_superuser(password=password, **validated_data)
+            if not groups:
+                raise serializers.ValidationError({"group_ids": "Informe ao menos um grupo."})
+            employee.groups.set(groups)
+            employee.refresh_from_db()
+        return employee
 
 
-class AdministratorTokenSerializer(serializers.Serializer):
+class EmployeeTokenSerializer(serializers.Serializer):
     email = serializers.CharField()
     password = serializers.CharField(write_only=True, min_length=8)
     refresh = serializers.CharField(read_only=True)
@@ -165,17 +213,17 @@ class AdministratorTokenSerializer(serializers.Serializer):
         email = (attrs.get("email") or "").strip()
         pattern = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
         if not pattern.match(email):
-            raise serializers.ValidationError({"email": "Insira um endereço de email válido."})
+            raise serializers.ValidationError({"email": "Insira um endereco de email valido."})
         password = attrs["password"]
         try:
-            admin = Administrator.objects.get(email=email, is_active=True, is_staff=True)
-        except Administrator.DoesNotExist as exc:  # pragma: no cover - mensagem uniforme
-            raise serializers.ValidationError({"detail": "Credenciais inválidas."}) from exc
+            employee = Employee.objects.get(email=email, is_active=True, is_staff=True)
+        except Employee.DoesNotExist as exc:
+            raise serializers.ValidationError({"detail": "Credenciais invalidas."}) from exc
 
-        if not admin.check_password(password):
-            raise serializers.ValidationError({"detail": "Credenciais inválidas."})
+        if not employee.check_password(password):
+            raise serializers.ValidationError({"detail": "Credenciais invalidas."})
 
-        refresh = AdminRefreshToken.for_admin(admin)
+        refresh = EmployeeRefreshToken.for_employee(employee)
         attrs["refresh"] = str(refresh)
         attrs["access"] = str(refresh.access_token)
         return attrs

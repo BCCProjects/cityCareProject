@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Attachment, Category, Comment, Department, Report, ReportTag, StatusHistory, Tag
+from .models import Attachment, Category, Department, Report, ReportTag, StatusHistory, Tag
 
 
 @admin.register(Department)
@@ -34,10 +34,7 @@ class ReportTagInline(admin.TabularInline):
     extra = 0
 
 
-class CommentInline(admin.TabularInline):
-    model = Comment
-    extra = 0
-    readonly_fields = ("citizen", "message", "created_at")
+ 
 
 
 @admin.register(Report)
@@ -48,16 +45,31 @@ class ReportAdmin(admin.ModelAdmin):
         "citizen",
         "category",
         "department",
+        "organization",
         "assigned_to",
         "status",
         "priority",
         "created_at",
         "last_status_at",
     )
-    list_filter = ("status", "priority", "category", "category__department", "assigned_to", "tags")
-    search_fields = ("title", "citizen__full_name", "category__name")
-    inlines = [AttachmentInline, ReportTagInline, CommentInline]
-    autocomplete_fields = ("citizen", "category", "department", "tags", "assigned_to")
+    list_filter = (
+        "status",
+        "priority",
+        "category",
+        "category__department",
+        "organization",
+        "assigned_to",
+        "tags",
+    )
+    search_fields = (
+        "title",
+        "citizen__first_name",
+        "citizen__last_name",
+        "category__name",
+        "organization__name",
+    )
+    inlines = [AttachmentInline, ReportTagInline]
+    autocomplete_fields = ("citizen", "category", "department", "organization", "tags", "assigned_to")
     readonly_fields = ("created_at", "updated_at", "last_status_at")
 
 
@@ -68,10 +80,7 @@ class StatusHistoryAdmin(admin.ModelAdmin):
     list_filter = ("new_status",)
 
 
-@admin.register(Comment)
-class CommentAdmin(admin.ModelAdmin):
-    list_display = ("report", "citizen", "created_at")
-    search_fields = ("report__title", "citizen__full_name")
+ 
 
 
 @admin.register(Attachment)

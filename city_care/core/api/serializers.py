@@ -3,11 +3,10 @@ from __future__ import annotations
 from typing import Iterable
 
 from django.core.exceptions import ValidationError
-from django.db import transaction
 from rest_framework import serializers
 
 from accounts.models import Citizen
-from core.reports.models import Attachment, Category, Comment, Department, Report, Tag
+from core.reports.models import Attachment, Category, Department, Report, Tag
 from core.services.report_service import ReportService
 
 
@@ -49,15 +48,6 @@ class AttachmentSerializer(serializers.ModelSerializer):
         read_only_fields = ("id",)
 
 
-class CommentSerializer(serializers.ModelSerializer):
-    citizen_name = serializers.CharField(source="citizen.full_name", read_only=True)
-
-    class Meta:
-        model = Comment
-        fields = ("id", "message", "created_at", "citizen_name")
-        read_only_fields = ("id", "created_at", "citizen_name")
-
-
 class ReportListSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     tags = TagSerializer(read_only=True, many=True)
@@ -80,7 +70,7 @@ class ReportDetailSerializer(serializers.ModelSerializer):
     department = DepartmentSerializer(read_only=True)
     tags = TagSerializer(read_only=True, many=True)
     attachments = AttachmentSerializer(read_only=True, many=True)
-    comments = CommentSerializer(read_only=True, many=True)
+    organization = serializers.StringRelatedField(read_only=True)
 
     class Meta:
         model = Report
@@ -99,9 +89,9 @@ class ReportDetailSerializer(serializers.ModelSerializer):
             "last_status_at",
             "category",
             "department",
+            "organization",
             "tags",
             "attachments",
-            "comments",
         )
 
 
@@ -114,7 +104,7 @@ class ReportCreateSerializer(serializers.Serializer):
     neighborhood = serializers.CharField(max_length=150)
     latitude = serializers.DecimalField(max_digits=9, decimal_places=6)
     longitude = serializers.DecimalField(max_digits=9, decimal_places=6)
-    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
+    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True, required=False)
     attachments = serializers.ListField(
         child=serializers.FileField(max_length=5 * 1024 * 1024),
         allow_empty=True,
@@ -124,12 +114,12 @@ class ReportCreateSerializer(serializers.Serializer):
     def validate_attachments(self, value: Iterable):
         max_files = 5
         if len(value) > max_files:
-            raise serializers.ValidationError("Limite de 5 anexos por ocorrência.")
+            raise serializers.ValidationError("Limite de 5 anexos por ocorrencia.")
         for file in value:
             if file.size > 5 * 1024 * 1024:
-                raise serializers.ValidationError("Cada anexo deve ter no máximo 5MB.")
+                raise serializers.ValidationError("Cada anexo deve ter no maximo 5MB.")
             if file.content_type not in {"image/jpeg", "image/png", "image/webp"}:
-                raise serializers.ValidationError("Formato de anexo não permitido.")
+                raise serializers.ValidationError("Formato de anexo nao permitido.")
         return value
 
     def create(self, validated_data):
@@ -147,19 +137,7 @@ class ReportCreateSerializer(serializers.Serializer):
                 **validated_data,
             )
         except ValidationError as exc:
-            raise serializers.ValidationError(exc.message_dict if hasattr(exc, "message_dict") else exc.messages)
+            if hasattr(exc, "message_dict"):
+                raise serializers.ValidationError(exc.message_dict)
+            raise serializers.ValidationError(exc.messages)
         return report
-
-
-class CommentCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Comment
-        fields = ("id", "message")
-        read_only_fields = ("id",)
-
-    def create(self, validated_data):
-        report: Report = self.context["report"]
-        citizen: Citizen = self.context["citizen"]
-        with transaction.atomic():
-            comment = Comment.objects.create(report=report, citizen=citizen, **validated_data)
-        return comment
