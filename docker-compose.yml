@@ -23,12 +23,21 @@ services:
       - city_care/.env
     environment:
       MYSQL_HOST: host.docker.internal
+      CHANNEL_LAYER_BACKEND: redis
+      CHANNEL_LAYER_REDIS_URL: redis://redis:6379/0
     volumes:
       - ./city_care:/app
     ports:
       - "8000:8000"
-    # depends_on:
+    depends_on:
+      - redis
     #   - db
+
+  redis:
+    image: redis:7.4-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
 
   frontend:
     build:

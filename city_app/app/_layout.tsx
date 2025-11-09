@@ -9,6 +9,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 import { LoadingState } from "@/components/feedback/LoadingState";
 import { AuthProvider, useAuth } from "@/features/auth/auth-context";
+import { useReportRealtimeUpdates } from "@/features/reports/hooks";
 import { queryClient } from "@/lib/query-client";
 
 const RootNavigation = () => {
@@ -46,6 +47,7 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <RealtimeBridge />
         <GestureHandlerRootView style={{ flex: 1 }}>
           <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
             <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
@@ -56,3 +58,8 @@ export default function RootLayout() {
     </QueryClientProvider>
   );
 }
+
+const RealtimeBridge = () => {
+  useReportRealtimeUpdates();
+  return null;
+};

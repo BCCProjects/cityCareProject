@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "channels",
     "corsheaders",
     "rest_framework",
     "rest_framework_simplejwt",
@@ -79,6 +80,24 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "city_care.wsgi.application"
+ASGI_APPLICATION = "city_care.asgi.application"
+
+CHANNEL_LAYER_BACKEND = os.getenv("CHANNEL_LAYER_BACKEND", "memory").lower()
+CHANNEL_LAYER_REDIS_URL = os.getenv("CHANNEL_LAYER_REDIS_URL") or os.getenv("REDIS_URL", "redis://localhost:6379/0")
+
+if CHANNEL_LAYER_BACKEND == "redis":
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {"hosts": [CHANNEL_LAYER_REDIS_URL]},
+        }
+    }
+else:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels.layers.InMemoryChannelLayer",
+        }
+    }
 
 DB_ENGINE = os.getenv("DB_ENGINE", "sqlite").lower()
 if DB_ENGINE == "mysql":

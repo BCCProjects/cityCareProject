@@ -15,6 +15,7 @@ As variáveis acessíveis no app ficam em `city_app/.env` (já versionado para o
 
 ```ini
 EXPO_PUBLIC_API_BASE_URL=http://backend:8000/api
+EXPO_PUBLIC_WS_BASE_URL=ws://backend:8000/ws
 EXPO_PUBLIC_X_APP=mycitycareapp
 EXPO_PUBLIC_X_USER=mycitycareuser
 EXPO_PUBLIC_X_SIGNATURE=secret-signature
@@ -23,6 +24,7 @@ EXPO_PUBLIC_GOOGLE_MAPS_SECRET_KEY=your-google-maps-sdk-key
 ```
 
 - Ajuste `EXPO_PUBLIC_API_BASE_URL` para o endereço apropriado (`http://127.0.0.1:8000/api` fora de containers ou `http://backend:8000/api` via Docker).
+- `EXPO_PUBLIC_WS_BASE_URL` deve apontar para o endpoint ASGI (`ws://host:porta/ws`) responsável pelos updates em tempo real; caso não informado, o app deriva automaticamente a partir do `API_BASE_URL`.
 - Os cabeçalhos `X-APP`, `X-USER` e `X-SIGNATURE` devem permanecer alinhados aos definidos em `city_care/.env`.
 - `EXPO_PUBLIC_GOOGLE_MAPS_SECRET_KEY` libera o autocomplete do Google Places e o provider Google Maps no seletor de localização do formulário de ocorrência.
 
@@ -67,3 +69,4 @@ O código das pastas `city_care/` e `city_app/` é montado como volume, permitin
 1. Implementar histórico de status da ocorrência quando o backend expor o endpoint correspondente.
 2. Adicionar testes E2E (Detox ou Playwright) para fluxos críticos de login e abertura de ocorrência.
 3. Disponibilizar opções de tema (dark/brand) aproveitando a componentização existente.
+

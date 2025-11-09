@@ -55,6 +55,16 @@ A migração `0002_database_objects` ainda cria:
 4. Crie um superusuário administrador: `python manage.py createsuperuser`.
 5. Inicie o servidor: `python manage.py runserver`.
 
+Para recursos em tempo real, defina `CHANNEL_LAYER_BACKEND` (padrão `memory`) e, ao usar Redis, informe `CHANNEL_LAYER_REDIS_URL`. O `docker-compose.yml` já disponibiliza um serviço `redis` pronto (`redis://redis:6379/0`) para ser apontado por essas variáveis.
+
+## Atualizações em tempo real
+
+- **Stack**: Django Channels + Daphne expõem o projeto via ASGI, atendendo HTTP e WebSocket (mesmo host/porta).
+- **Canal**: `ws://<host>/ws/reports/` envia `report.created` e `report.status_changed` sempre que ocorrências são criadas ou têm o status alterado.
+- **Autenticação**: o mesmo JWT do app deve ser enviado (query `?token=<ACCESS>` ou header `Authorization: Bearer ...`). Sessões do Django Admin também funcionam automaticamente.
+- **Segregação**: cidadãos escutam apenas o grupo `citizen_<id>` e funcionários entram em `organization_<id>`, garantindo isolamento por órgão.
+- **Payload**: cada evento traz resumo do relatório (id, status, prioridade, `last_status_at`) e metadados do histórico para invalidar caches com segurança.
+
 ### Banco de dados
 
 - **Produção**: defina `DB_ENGINE=mysql` e configure `MYSQL_*` para utilizar MySQL.
@@ -77,6 +87,7 @@ A migração `0002_database_objects` ainda cria:
 | `GET` | `/api/reports/eligibles-ignore` | Consulta relatórios elegíveis (apenas chamadas internas com cabeçalhos X-USER/X-APP/X-SIGNATURE). |
 | `GET` | `/api/reports/avg-resolution/` | Média de resolução por categoria em horas. |
 | `GET` | `/api/dashboard/` | Dados agregados (abertos por bairro/prioridade e série semanal).
+| `WS` | `/ws/reports/` | WebSocket autenticado que publica `report.created` e `report.status_changed`. |
 
 A coleção Postman (`postman/CityCare.postman_collection.json`) e o environment (`postman/CityCare.postman_environment.json`) já trazem todas as chamadas com variáveis preparadas.
 
