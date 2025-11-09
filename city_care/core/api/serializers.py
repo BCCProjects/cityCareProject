@@ -10,6 +10,21 @@ from core.reports.models import Attachment, Category, Department, Report, Tag
 from core.services.report_service import ReportService
 
 
+class MultipleFileField(serializers.ListField):
+    """
+    ListField helper that knows how to pull multiple uploaded files out of a
+    Django QueryDict (request.data/request.FILES) using getlist so mobile
+    clients can send repeated `attachments` keys in multipart requests.
+    """
+
+    def get_value(self, dictionary):
+        if hasattr(dictionary, "getlist"):
+            if self.field_name in dictionary:
+                return dictionary.getlist(self.field_name)
+            return serializers.empty
+        return super().get_value(dictionary)
+
+
 class DepartmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Department
@@ -105,7 +120,7 @@ class ReportCreateSerializer(serializers.Serializer):
     latitude = serializers.DecimalField(max_digits=9, decimal_places=6)
     longitude = serializers.DecimalField(max_digits=9, decimal_places=6)
     tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True, required=False)
-    attachments = serializers.ListField(
+    attachments = MultipleFileField(
         child=serializers.FileField(max_length=5 * 1024 * 1024),
         allow_empty=True,
         required=False,

@@ -3,7 +3,7 @@ from __future__ import annotations
 from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.authentication import SessionAuthentication
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 
 from accounts.models import Citizen, City, Employee, Organization, State
@@ -33,14 +33,14 @@ class StateViewSet(
 ):
     queryset = State.objects.all()
     serializer_class = StateSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     authentication_classes = (EmployeeJWTAuthentication, CitizenJWTAuthentication, SessionAuthentication)
     pagination_class = None
 
     def get_permissions(self):
-        if self.action in {"create", "update", "partial_update", "destroy"}:
-            return [IsAdminUser()]
-        return [IsAuthenticated()]
+        if self.action in {"list", "retrieve"}:
+            return [AllowAny()]
+        return [InternalAPIPermission()]
 
 
 class CityViewSet(
@@ -53,14 +53,14 @@ class CityViewSet(
 ):
     queryset = City.objects.select_related("state").all()
     serializer_class = CitySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
     authentication_classes = (EmployeeJWTAuthentication, CitizenJWTAuthentication, SessionAuthentication)
     pagination_class = None
 
     def get_permissions(self):
-        if self.action in {"create", "update", "partial_update", "destroy"}:
-            return [IsAdminUser()]
-        return [IsAuthenticated()]
+        if self.action in {"list", "retrieve"}:
+            return [AllowAny()]
+        return [InternalAPIPermission()]
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -80,14 +80,9 @@ class OrganizationViewSet(
 ):
     queryset = Organization.objects.select_related("city", "city__state").all()
     serializer_class = OrganizationSerializer
-    permission_classes = [IsAuthenticated]
-    authentication_classes = (EmployeeJWTAuthentication, CitizenJWTAuthentication, SessionAuthentication)
+    permission_classes = [InternalAPIPermission]
+    authentication_classes: tuple = ()
     pagination_class = None
-
-    def get_permissions(self):
-        if self.action in {"create", "update", "partial_update", "destroy"}:
-            return [IsAdminUser()]
-        return [IsAuthenticated()]
 
     def get_queryset(self):
         qs = super().get_queryset()
