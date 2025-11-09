@@ -25,12 +25,20 @@ const formatError = (error: unknown) => {
   return "Não foi possível concluir a operação.";
 };
 
+type PaginatedResponse<T> = {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+};
+
 export type ListReportsParams = Partial<{
   status: ReportStatus;
   category: number;
   department: number;
   priority: ReportPriority;
   tag: number;
+  page: number;
 }>;
 
 type PreparedAttachment =
@@ -54,10 +62,10 @@ const prepareAttachment = async (attachment: { uri: string; name: string; type: 
 };
 
 export const reportsApi = {
-  async listReports(params?: ListReportsParams): Promise<{ results: ReportListItem[] }> {
+  async listReports(params?: ListReportsParams): Promise<PaginatedResponse<ReportListItem>> {
     try {
-      const response = await apiClient.get<ReportListItem[]>("/reports/", { params });
-      return { results: response.data };
+      const response = await apiClient.get<PaginatedResponse<ReportListItem>>("/reports/", { params });
+      return response.data;
     } catch (error) {
       throw new Error(formatError(error));
     }

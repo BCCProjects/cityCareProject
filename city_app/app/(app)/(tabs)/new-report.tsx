@@ -1,7 +1,7 @@
 import * as ImagePicker from "expo-image-picker";
 import { useRouter } from "expo-router";
 import { useMemo, useState } from "react";
-import { Alert, Image, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Image, StyleSheet, Text, View } from "react-native";
 
 import { ErrorMessage } from "@/components/form/ErrorMessage";
 import { InputField } from "@/components/form/InputField";
@@ -71,7 +71,6 @@ export default function NewReportScreen() {
     }
 
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsMultipleSelection: false,
       quality: 0.7,
     });
@@ -175,8 +174,7 @@ export default function NewReportScreen() {
   );
 
   return (
-    <Screen scrollable={false}>
-      <ScrollView contentContainerStyle={styles.container}>
+    <Screen contentStyle={styles.container}>
         <Text style={styles.title}>Nova ocorrência</Text>
         <Text style={styles.subtitle}>Descreva com clareza para acelerar o atendimento.</Text>
 
@@ -257,14 +255,14 @@ export default function NewReportScreen() {
           loading={createReportMutation.isPending}
           disabled={createReportMutation.isPending}
         />
-      </ScrollView>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    paddingBottom: 32,
+    paddingBottom: 40,
+    gap: 16,
   },
   title: {
     fontSize: 24,
@@ -280,13 +278,6 @@ const styles = StyleSheet.create({
   multilineInput: {
     minHeight: 120,
     textAlignVertical: "top",
-  },
-  row: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  column: {
-    flex: 1,
   },
   attachmentHeader: {
     marginTop: 12,

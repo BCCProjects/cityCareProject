@@ -141,7 +141,7 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 20,
 }
 
-CORS_DEFAULT_ORIGIN = "http://localhost:3000" if DEBUG else ""
+CORS_DEFAULT_ORIGIN = ["http://localhost:3000", "http://localhost:8081", "exp://192.168.1.14:8081"] if DEBUG else ""
 CORS_ALLOWED_ORIGINS = env_list("DJANGO_CORS_ALLOWED_ORIGINS", CORS_DEFAULT_ORIGIN)
 CORS_ALLOW_ALL_ORIGINS = False
 if not CORS_ALLOWED_ORIGINS and DEBUG:

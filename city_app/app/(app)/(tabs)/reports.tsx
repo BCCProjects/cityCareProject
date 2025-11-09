@@ -37,6 +37,7 @@ export default function ReportsTab() {
   const { data, isLoading, isRefetching, refetch, error } = useReports(queryParams);
 
   const reports = data?.results ?? [];
+  const isEmpty = reports.length === 0;
 
   const categoryItems =
     categoriesData?.map((category) => ({
@@ -129,7 +130,7 @@ export default function ReportsTab() {
                 subtitle="Crie uma nova ocorrência ou ajuste os filtros."
               />
             }
-            contentContainerStyle={reports.length === 0 ? styles.listEmptyContainer : undefined}
+            contentContainerStyle={isEmpty ? [styles.listContent, styles.listEmptyContainer] : styles.listContent}
           />
         )}
       </View>
@@ -154,6 +155,7 @@ const styles = StyleSheet.create({
   },
   filters: {
     marginBottom: 12,
+    gap: 12,
   },
   clearFilters: {
     color: "#2563eb",
@@ -206,6 +208,9 @@ const styles = StyleSheet.create({
   tagText: {
     color: "#475569",
     fontSize: 12,
+  },
+  listContent: {
+    paddingBottom: 32,
   },
   listEmptyContainer: {
     flexGrow: 1,
