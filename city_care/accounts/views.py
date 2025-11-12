@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from rest_framework import status
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -12,6 +12,7 @@ from .serializers import (
     EmployeeTokenSerializer,
     SecurityHeadersMixin,
 )
+from core.api.authentication import CitizenJWTAuthentication
 
 
 class CitizenRegistrationView(SecurityHeadersMixin, APIView):
@@ -57,3 +58,13 @@ class EmployeeTokenObtainView(SecurityHeadersMixin, APIView):
         serializer = EmployeeTokenSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response({"refresh": serializer.validated_data["refresh"], "access": serializer.validated_data["access"]})
+
+
+class CitizenProfileView(SecurityHeadersMixin, APIView):
+    permission_classes = [IsAuthenticated]
+    authentication_classes = (CitizenJWTAuthentication,)
+
+    def get(self, request, *args, **kwargs):
+        self.validate_headers(request)
+        serializer = CitizenRegistrationSerializer(request.user)
+        return Response(serializer.data)

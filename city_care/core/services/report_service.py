@@ -10,6 +10,11 @@ from django.utils import timezone
 from accounts.models import Citizen, Employee
 from core.repositories import report_repository
 from core.reports.models import Report, ReportPriority, ReportStatus, StatusHistory, Tag
+from core.services.location_service import (
+    CityNotCoveredError,
+    LocationResolutionError,
+    resolve_city_from_coordinates,
+)
 
 
 class InvalidStatusTransition(Exception):
@@ -57,9 +62,16 @@ class ReportService:
                     ]
                 })
 
-            organization = getattr(citizen.city, "organization", None)
+            try:
+                resolved_city = resolve_city_from_coordinates(latitude, longitude)
+            except CityNotCoveredError as exc:
+                raise ValidationError({"location": str(exc)}) from exc
+            except LocationResolutionError as exc:
+                raise ValidationError({"location": str(exc)}) from exc
+
+            organization = getattr(resolved_city, "organization", None)
             if organization is None:
-                raise ValidationError({"organization": "No organization configured for the citizen city."})
+                raise ValidationError({"organization": "Nenhuma organizacao vinculada a cidade identificada."})
 
             default_employee = organization.employees.order_by("id").first()
 
@@ -73,6 +85,7 @@ class ReportService:
                 category=category,
                 department=department,
                 organization=organization,
+                city=resolved_city,
                 assigned_to=default_employee,
                 title=title,
                 description=description,
@@ -133,6 +146,7 @@ class ReportService:
             elif report.denied_reason and new_status != ReportStatus.INDEFERIDO:
                 report.denied_reason = ""
             report.full_clean()
+            report._skip_auto_history = True
             report.save(update_fields=["status", "last_status_at", "denied_reason"])
 
             history = StatusHistory.objects.create(

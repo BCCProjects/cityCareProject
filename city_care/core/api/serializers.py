@@ -6,8 +6,24 @@ from django.core.exceptions import ValidationError
 from rest_framework import serializers
 
 from accounts.models import Citizen
+from accounts.serializers import CitySerializer
 from core.reports.models import Attachment, Category, Department, Report, Tag
 from core.services.report_service import ReportService
+
+
+class MultipleFileField(serializers.ListField):
+    """
+    ListField helper that knows how to pull multiple uploaded files out of a
+    Django QueryDict (request.data/request.FILES) using getlist so mobile
+    clients can send repeated `attachments` keys in multipart requests.
+    """
+
+    def get_value(self, dictionary):
+        if hasattr(dictionary, "getlist"):
+            if self.field_name in dictionary:
+                return dictionary.getlist(self.field_name)
+            return serializers.empty
+        return super().get_value(dictionary)
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -51,6 +67,7 @@ class AttachmentSerializer(serializers.ModelSerializer):
 class ReportListSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     tags = TagSerializer(read_only=True, many=True)
+    city = CitySerializer(read_only=True)
 
     class Meta:
         model = Report
@@ -60,6 +77,7 @@ class ReportListSerializer(serializers.ModelSerializer):
             "status",
             "priority",
             "created_at",
+            "city",
             "category",
             "tags",
         )
@@ -71,6 +89,7 @@ class ReportDetailSerializer(serializers.ModelSerializer):
     tags = TagSerializer(read_only=True, many=True)
     attachments = AttachmentSerializer(read_only=True, many=True)
     organization = serializers.StringRelatedField(read_only=True)
+    city = CitySerializer(read_only=True)
 
     class Meta:
         model = Report
@@ -89,6 +108,7 @@ class ReportDetailSerializer(serializers.ModelSerializer):
             "last_status_at",
             "category",
             "department",
+            "city",
             "organization",
             "tags",
             "attachments",
@@ -105,7 +125,7 @@ class ReportCreateSerializer(serializers.Serializer):
     latitude = serializers.DecimalField(max_digits=9, decimal_places=6)
     longitude = serializers.DecimalField(max_digits=9, decimal_places=6)
     tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True, required=False)
-    attachments = serializers.ListField(
+    attachments = MultipleFileField(
         child=serializers.FileField(max_length=5 * 1024 * 1024),
         allow_empty=True,
         required=False,

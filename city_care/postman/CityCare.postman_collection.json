@@ -256,12 +256,7 @@
                             "name": "List States",
                             "request": {
                                 "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{employee_access_token}}"
-                                    }
-                                ],
+                                "header": [],
                                 "url": {
                                     "raw": "{{base_url}}/api/states",
                                     "host": [
@@ -285,8 +280,16 @@
                                         "value": "application/json"
                                     },
                                     {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{employee_access_token}}"
+                                        "key": "X-USER",
+                                        "value": "{{api_user}}"
+                                    },
+                                    {
+                                        "key": "X-APP",
+                                        "value": "{{api_app}}"
+                                    },
+                                    {
+                                        "key": "X-SIGNATURE",
+                                        "value": "{{api_signature}}"
                                     }
                                 ],
                                 "url": {
@@ -325,12 +328,7 @@
                             "name": "Get State",
                             "request": {
                                 "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{employee_access_token}}"
-                                    }
-                                ],
+                                "header": [],
                                 "url": {
                                     "raw": "{{base_url}}/api/states/{{state_id}}",
                                     "host": [
@@ -355,8 +353,16 @@
                                         "value": "application/json"
                                     },
                                     {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{employee_access_token}}"
+                                        "key": "X-USER",
+                                        "value": "{{api_user}}"
+                                    },
+                                    {
+                                        "key": "X-APP",
+                                        "value": "{{api_app}}"
+                                    },
+                                    {
+                                        "key": "X-SIGNATURE",
+                                        "value": "{{api_signature}}"
                                     }
                                 ],
                                 "url": {
@@ -383,8 +389,16 @@
                                 "method": "DELETE",
                                 "header": [
                                     {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{employee_access_token}}"
+                                        "key": "X-USER",
+                                        "value": "{{api_user}}"
+                                    },
+                                    {
+                                        "key": "X-APP",
+                                        "value": "{{api_app}}"
+                                    },
+                                    {
+                                        "key": "X-SIGNATURE",
+                                        "value": "{{api_signature}}"
                                     }
                                 ],
                                 "url": {
@@ -410,12 +424,7 @@
                             "name": "List Cities",
                             "request": {
                                 "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{employee_access_token}}"
-                                    }
-                                ],
+                                "header": [],
                                 "url": {
                                     "raw": "{{base_url}}/api/cities",
                                     "host": [
@@ -439,8 +448,16 @@
                                         "value": "application/json"
                                     },
                                     {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{employee_access_token}}"
+                                        "key": "X-USER",
+                                        "value": "{{api_user}}"
+                                    },
+                                    {
+                                        "key": "X-APP",
+                                        "value": "{{api_app}}"
+                                    },
+                                    {
+                                        "key": "X-SIGNATURE",
+                                        "value": "{{api_signature}}"
                                     }
                                 ],
                                 "url": {
@@ -479,12 +496,7 @@
                             "name": "Get City",
                             "request": {
                                 "method": "GET",
-                                "header": [
-                                    {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{employee_access_token}}"
-                                    }
-                                ],
+                                "header": [],
                                 "url": {
                                     "raw": "{{base_url}}/api/cities/{{city_id}}",
                                     "host": [
@@ -509,8 +521,16 @@
                                         "value": "application/json"
                                     },
                                     {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{employee_access_token}}"
+                                        "key": "X-USER",
+                                        "value": "{{api_user}}"
+                                    },
+                                    {
+                                        "key": "X-APP",
+                                        "value": "{{api_app}}"
+                                    },
+                                    {
+                                        "key": "X-SIGNATURE",
+                                        "value": "{{api_signature}}"
                                     }
                                 ],
                                 "url": {
@@ -537,8 +557,16 @@
                                 "method": "DELETE",
                                 "header": [
                                     {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{employee_access_token}}"
+                                        "key": "X-USER",
+                                        "value": "{{api_user}}"
+                                    },
+                                    {
+                                        "key": "X-APP",
+                                        "value": "{{api_app}}"
+                                    },
+                                    {
+                                        "key": "X-SIGNATURE",
+                                        "value": "{{api_signature}}"
                                     }
                                 ],
                                 "url": {
@@ -566,8 +594,16 @@
                                 "method": "GET",
                                 "header": [
                                     {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{employee_access_token}}"
+                                        "key": "X-USER",
+                                        "value": "{{api_user}}"
+                                    },
+                                    {
+                                        "key": "X-APP",
+                                        "value": "{{api_app}}"
+                                    },
+                                    {
+                                        "key": "X-SIGNATURE",
+                                        "value": "{{api_signature}}"
                                     }
                                 ],
                                 "url": {
@@ -593,8 +629,16 @@
                                         "value": "application/json"
                                     },
                                     {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{employee_access_token}}"
+                                        "key": "X-USER",
+                                        "value": "{{api_user}}"
+                                    },
+                                    {
+                                        "key": "X-APP",
+                                        "value": "{{api_app}}"
+                                    },
+                                    {
+                                        "key": "X-SIGNATURE",
+                                        "value": "{{api_signature}}"
                                     }
                                 ],
                                 "url": {
@@ -635,8 +679,16 @@
                                 "method": "GET",
                                 "header": [
                                     {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{employee_access_token}}"
+                                        "key": "X-USER",
+                                        "value": "{{api_user}}"
+                                    },
+                                    {
+                                        "key": "X-APP",
+                                        "value": "{{api_app}}"
+                                    },
+                                    {
+                                        "key": "X-SIGNATURE",
+                                        "value": "{{api_signature}}"
                                     }
                                 ],
                                 "url": {
@@ -663,8 +715,16 @@
                                         "value": "application/json"
                                     },
                                     {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{employee_access_token}}"
+                                        "key": "X-USER",
+                                        "value": "{{api_user}}"
+                                    },
+                                    {
+                                        "key": "X-APP",
+                                        "value": "{{api_app}}"
+                                    },
+                                    {
+                                        "key": "X-SIGNATURE",
+                                        "value": "{{api_signature}}"
                                     }
                                 ],
                                 "url": {
@@ -691,8 +751,16 @@
                                 "method": "DELETE",
                                 "header": [
                                     {
-                                        "key": "Authorization",
-                                        "value": "Bearer {{employee_access_token}}"
+                                        "key": "X-USER",
+                                        "value": "{{api_user}}"
+                                    },
+                                    {
+                                        "key": "X-APP",
+                                        "value": "{{api_app}}"
+                                    },
+                                    {
+                                        "key": "X-SIGNATURE",
+                                        "value": "{{api_signature}}"
                                     }
                                 ],
                                 "url": {
@@ -1298,6 +1366,232 @@
                         }
                     },
                     "response": []
+                },
+                {
+                    "name": "Eligible Reports Ignore (Internal)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-USER",
+                                "value": "{{api_user}}"
+                            },
+                            {
+                                "key": "X-APP",
+                                "value": "{{api_app}}"
+                            },
+                            {
+                                "key": "X-SIGNATURE",
+                                "value": "{{api_signature}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/reports/eligibles-ignore?hours={{ignore_hours}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "reports",
+                                "eligibles-ignore"
+                            ],
+                            "query": [
+                                {
+                                    "key": "hours",
+                                    "value": "{{ignore_hours}}"
+                                }
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Eligible reports listed', function () {",
+                                    "  pm.response.to.have.status(200);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Average Resolution (Admin)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{employee_access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/reports/avg-resolution",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "reports",
+                                "avg-resolution"
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Average resolution fetched', function () {",
+                                    "  pm.response.to.have.status(200);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Dashboard",
+            "item": [
+                {
+                    "name": "Get Dashboard",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{employee_access_token}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/dashboard",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "dashboard"
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Dashboard loaded', function () {",
+                                    "  pm.response.to.have.status(200);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "System Operations",
+            "item": [
+                {
+                    "name": "Full Backup",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-USER",
+                                "value": "{{api_user}}"
+                            },
+                            {
+                                "key": "X-APP",
+                                "value": "{{api_app}}"
+                            },
+                            {
+                                "key": "X-SIGNATURE",
+                                "value": "{{api_signature}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/system/backup/full",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "system",
+                                "backup",
+                                "full"
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Full backup triggered', function () {",
+                                    "  pm.response.to.have.status(200);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Diff Backup",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-USER",
+                                "value": "{{api_user}}"
+                            },
+                            {
+                                "key": "X-APP",
+                                "value": "{{api_app}}"
+                            },
+                            {
+                                "key": "X-SIGNATURE",
+                                "value": "{{api_signature}}"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/api/system/backup/diff",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "system",
+                                "backup",
+                                "diff"
+                            ]
+                        }
+                    },
+                    "response": [],
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Diff backup triggered', function () {",
+                                    "  pm.response.to.have.status(200);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ]
                 }
             ]
         }

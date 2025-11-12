@@ -6,7 +6,7 @@ from django.core.validators import MinLengthValidator
 from django.db import models
 from django.utils import timezone
 
-from accounts.models import Citizen, Organization
+from accounts.models import Citizen, City, Organization
 from .storage import AttachmentStorage
 
 
@@ -73,6 +73,11 @@ class Report(models.Model):
     citizen = models.ForeignKey(Citizen, on_delete=models.PROTECT, related_name="reports")
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name="reports")
     department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name="reports")
+    city = models.ForeignKey(
+        City,
+        on_delete=models.PROTECT,
+        related_name="reports",
+    )
     organization = models.ForeignKey(
         Organization,
         on_delete=models.PROTECT,
@@ -128,12 +133,10 @@ class Report(models.Model):
         super().clean()
         if self.category and self.department and self.category.department_id != self.department_id:
             raise ValidationError("Categoria informada nao pertence ao departamento selecionado.")
-        if self.citizen_id and self.organization_id:
-            expected_org = getattr(self.citizen.city, "organization", None)
-            if expected_org is None:
-                raise ValidationError({"organization": "No organization configured for the citizen city."})
-            if expected_org.pk != self.organization_id:
-                raise ValidationError({"organization": "Organization does not match the citizen city."})
+        if self.city_id and self.organization_id:
+            org_city_id = getattr(self.organization, "city_id", None)
+            if org_city_id != self.city_id:
+                raise ValidationError({"organization": "Organization nao pertence a cidade resolvida."})
         if self.status == ReportStatus.INDEFERIDO and not self.denied_reason:
             raise ValidationError({"denied_reason": "Informe o motivo de indeferimento."})
 
@@ -143,6 +146,7 @@ class Report(models.Model):
     def save(self, *args, **kwargs):
         status_changed = False
         previous_status = None
+        skip_auto_history = getattr(self, "_skip_auto_history", False)
         if self.pk:
             try:
                 original = Report.objects.only("status", "denied_reason").get(pk=self.pk)
@@ -155,7 +159,7 @@ class Report(models.Model):
             except Report.DoesNotExist:
                 pass
         super().save(*args, **kwargs)
-        if status_changed and previous_status is not None:
+        if status_changed and previous_status is not None and not skip_auto_history:
             StatusHistory.objects.create(
                 report=self,
                 previous_status=previous_status,
@@ -163,6 +167,8 @@ class Report(models.Model):
                 changed_by=None,
                 notes="Atualizacao direta de status",
             )
+        if skip_auto_history and hasattr(self, "_skip_auto_history"):
+            delattr(self, "_skip_auto_history")
 
 
 class ReportTag(models.Model):

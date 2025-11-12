@@ -1,15 +1,19 @@
 from __future__ import annotations
 
 from datetime import timedelta
+from decimal import Decimal
+from unittest import mock
 
 from django.contrib.auth.models import Group
+from django.core.exceptions import ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.utils import timezone
 
 from accounts.models import City, Citizen, Employee, Organization, State
 from core.repositories import report_repository
-from core.reports.models import Category, Department, Report, ReportStatus, Tag
+from core.reports.models import Category, Department, Report, ReportPriority, ReportStatus, Tag
+from core.services.location_service import CityNotCoveredError
 from core.services.report_service import InvalidStatusTransition, ReportService
 
 
@@ -49,6 +53,13 @@ class ReportServiceTests(TestCase):
         )
         self.employee.groups.add(self.default_group)
 
+        self.city_resolver_patcher = mock.patch(
+            "core.services.report_service.resolve_city_from_coordinates",
+            return_value=self.city,
+        )
+        self.mock_city_resolver = self.city_resolver_patcher.start()
+        self.addCleanup(self.city_resolver_patcher.stop)
+
     def test_full_status_flow(self):
         file_data = SimpleUploadedFile("foto.jpg", b"fake-image", content_type="image/jpeg")
         report = ReportService.create_report(
@@ -57,11 +68,11 @@ class ReportServiceTests(TestCase):
             department=self.department,
             title="Buraco perigoso proximo a escola",
             description="Ha um buraco profundo proximo a escola municipal.",
-            priority="ALTA",
+            priority=ReportPriority.HIGH,
             address="Rua A, 123",
             neighborhood="Centro",
-            latitude=-23.0,
-            longitude=-46.0,
+            latitude=Decimal("-23.0"),
+            longitude=Decimal("-46.0"),
             tags=[self.tag_road, self.tag_urgent],
             attachments=[file_data],
         )
@@ -77,7 +88,9 @@ class ReportServiceTests(TestCase):
         self.assertEqual(report.attachments.count(), 1)
         self.assertEqual(report.tags.count(), 2)
         self.assertEqual(result.history.new_status, ReportStatus.CONCLUIDO)
-        self.assertEqual(report.status_history.count(), 4)
+        self.assertEqual(report.status_history.count(), 5)
+        self.mock_city_resolver.assert_called_with(Decimal("-23.0"), Decimal("-46.0"))
+        self.assertEqual(report.city, self.city)
 
     def test_indefere_requires_reason(self):
         report = ReportService.create_report(
@@ -86,11 +99,11 @@ class ReportServiceTests(TestCase):
             department=self.department,
             title="Solicitacao de poda",
             description="Poda necessaria.",
-            priority="MEDIA",
+            priority=ReportPriority.MEDIUM,
             address="Rua B, 456",
             neighborhood="Centro",
-            latitude=-23.1,
-            longitude=-46.1,
+            latitude=Decimal("-23.1"),
+            longitude=Decimal("-46.1"),
             tags=[self.tag_road],
             attachments=[],
         )
@@ -104,14 +117,15 @@ class ReportServiceTests(TestCase):
             citizen=self.citizen,
             category=self.category,
             department=self.department,
+            city=self.city,
             organization=self.organization,
             title="Buraco sem resposta",
             description="Sem retorno",
-            priority="BAIXA",
+            priority=ReportPriority.LOW,
             address="Rua C, 789",
             neighborhood="Bairro",
-            latitude=-23.2,
-            longitude=-46.2,
+            latitude=Decimal("-23.2"),
+            longitude=Decimal("-46.2"),
             status=ReportStatus.ANALISANDO,
             last_status_at=timezone.now() - timedelta(hours=200),
         )
@@ -128,11 +142,11 @@ class ReportServiceTests(TestCase):
             department=self.department,
             title="Fios soltos",
             description="Fios caidos na rua",
-            priority="MEDIA",
+            priority=ReportPriority.MEDIUM,
             address="Rua D, 321",
             neighborhood="Vila",
-            latitude=-23.3,
-            longitude=-46.3,
+            latitude=Decimal("-23.3"),
+            longitude=Decimal("-46.3"),
             tags=[self.tag_road, self.tag_urgent],
             attachments=[file_one, file_two],
         )
@@ -140,3 +154,21 @@ class ReportServiceTests(TestCase):
         self.assertEqual(report.organization, self.organization)
         self.assertEqual(report.tags.count(), 2)
         self.assertEqual(report.attachments.count(), 2)
+
+    def test_create_report_outside_configured_cities(self):
+        self.mock_city_resolver.side_effect = CityNotCoveredError("fora da area")
+        with self.assertRaises(ValidationError):
+            ReportService.create_report(
+                citizen=self.citizen,
+                category=self.category,
+                department=self.department,
+                title="Ocorrencia distante",
+                description="Local nao coberto",
+                priority=ReportPriority.MEDIUM,
+                address="Rua Z, 999",
+                neighborhood="Centro",
+                latitude=Decimal("-10.0"),
+                longitude=Decimal("-35.0"),
+                tags=[],
+                attachments=[],
+            )

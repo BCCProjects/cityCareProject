@@ -172,6 +172,8 @@ class EmployeeRegistrationSerializer(serializers.ModelSerializer):
         queryset=Group.objects.all(),
         write_only=True,
         source="groups",
+        required=False,
+        allow_empty=True,
     )
 
     class Meta:
@@ -194,9 +196,10 @@ class EmployeeRegistrationSerializer(serializers.ModelSerializer):
         password = validated_data.pop("password")
         with transaction.atomic():
             employee = Employee.objects.create_superuser(password=password, **validated_data)
-            if not groups:
+            if groups:
+                employee.groups.set(groups)
+            elif not employee.is_superuser:
                 raise serializers.ValidationError({"group_ids": "Informe ao menos um grupo."})
-            employee.groups.set(groups)
             employee.refresh_from_db()
         return employee
 
