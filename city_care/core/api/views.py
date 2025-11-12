@@ -209,7 +209,14 @@ class ReportViewSet(
     def get_queryset(self):
         user = self.request.user
         base_qs = (
-            Report.objects.select_related("category", "category__department", "department")
+            Report.objects.select_related(
+                "category",
+                "category__department",
+                "department",
+                "city",
+                "city__state",
+                "organization",
+            )
             .prefetch_related("tags", "attachments")
         )
 

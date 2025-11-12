@@ -25,7 +25,7 @@ export default function ProfileScreen() {
   return (
     <Screen>
       <Text style={styles.title}>Meu perfil</Text>
-      <Text style={styles.subtitle}>Dados bÃ¡sicos utilizados nas solicitaÃ§Ãµes.</Text>
+      <Text style={styles.subtitle}>Seus Dados Básicos.</Text>
       <Card>
         <InfoRow label="Email" value={user?.email ?? fallbackValue} />
         <InfoRow label="Nome" value={fullName} />

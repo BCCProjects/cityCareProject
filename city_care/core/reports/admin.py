@@ -45,6 +45,7 @@ class ReportAdmin(admin.ModelAdmin):
         "citizen",
         "category",
         "department",
+        "city",
         "organization",
         "assigned_to",
         "status",
@@ -57,6 +58,7 @@ class ReportAdmin(admin.ModelAdmin):
         "priority",
         "category",
         "category__department",
+        "city",
         "organization",
         "assigned_to",
         "tags",
@@ -66,10 +68,11 @@ class ReportAdmin(admin.ModelAdmin):
         "citizen__first_name",
         "citizen__last_name",
         "category__name",
+        "city__name",
         "organization__name",
     )
     inlines = [AttachmentInline, ReportTagInline]
-    autocomplete_fields = ("citizen", "category", "department", "organization", "tags", "assigned_to")
+    autocomplete_fields = ("citizen", "category", "department", "city", "organization", "tags", "assigned_to")
     readonly_fields = ("created_at", "updated_at", "last_status_at")
 
 
