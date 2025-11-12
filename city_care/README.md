@@ -69,6 +69,8 @@ Para recursos em tempo real, defina `CHANNEL_LAYER_BACKEND` (padrão `memory`) e
 
 - **Produção**: defina `DB_ENGINE=mysql` e configure `MYSQL_*` para utilizar MySQL.
 - **Testes/Desenvolvimento rápido**: mantenha `DB_ENGINE=sqlite` para usar SQLite em arquivo local.
+- **Backup via `mysqldump`**: o container `backend` já instala o cliente MySQL (`mysqldump`). Em execuções fora do Docker, garanta que o cliente esteja no `PATH` ou defina `MYSQLDUMP_PATH` apontando para o binário. Os dumps completos enviados ao Supabase permanecem como `.sql`.
+- **SSL opcional**: caso o servidor MySQL imponha certificados que não possuímos, use `MYSQL_SSL_MODE` (mapeado para `--ssl-mode` ou `--skip-ssl*` quando for `DISABLED`) e/ou `MYSQLDUMP_EXTRA_ARGS` para repassar flags específicas (`--ssl-ca`, `--skip-ssl-verify-server-cert` etc.).
 
 ## Autenticação
 
@@ -112,6 +114,7 @@ Os testes cobrem o fluxo completo de status, validação de indeferimento, consu
 - Jobs automáticos (cron):
   - Marcação automática como IGNORADO após 72h sem atualização (diário 02:00).
   - Backup diferencial diário (02:20) e backup completo semanal (domingo 03:00).
+    - O diferencial envia apenas os registros alterados para um `.sql` incremental (sem gzip) no Supabase.
   - Gerenciar com `django-crontab`:
     - Adicionar: `python manage.py crontab add`
     - Listar: `python manage.py crontab show`

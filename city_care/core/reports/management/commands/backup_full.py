@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import gzip
 import os
+import shlex
 import shutil
 import subprocess
 from datetime import datetime, timezone as dt_timezone
@@ -12,6 +13,21 @@ from botocore.client import Config
 from django.core.management import CommandError
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from functools import lru_cache
+
+
+@lru_cache(maxsize=None)
+def _mysqldump_supports_ssl_mode(bin_path: str) -> bool:
+    try:
+        result = subprocess.run(
+            [bin_path, "--help"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except Exception:
+        return False
+    return "--ssl-mode" in result.stdout
 
 
 class Command(BaseCommand):
@@ -54,6 +70,13 @@ class Command(BaseCommand):
             user = db.get("USER")
             password = db.get("PASSWORD")
             name = db.get("NAME")
+            ssl_mode = (
+                os.getenv("MYSQL_SSL_MODE")
+                or os.getenv("MYSQLDUMP_SSL_MODE")
+                or db.get("OPTIONS", {}).get("ssl_mode")
+            )
+            extra_args_raw = os.getenv("MYSQLDUMP_EXTRA_ARGS", "")
+            extra_args = shlex.split(extra_args_raw) if extra_args_raw.strip() else []
             if not all([user, name]):
                 self.stderr.write(self.style.ERROR("Config MySQL incompleta para backup."))
                 return
@@ -79,6 +102,22 @@ class Command(BaseCommand):
                 "--triggers",
                 name,
             ]
+            if ssl_mode:
+                normalized_mode = ssl_mode.strip().upper()
+                supports_ssl_mode = _mysqldump_supports_ssl_mode(mysqldump_path)
+                if normalized_mode == "DISABLED":
+                    cmd.extend(["--skip-ssl", "--skip-ssl-verify-server-cert"])
+                elif supports_ssl_mode:
+                    cmd.extend(["--ssl-mode", normalized_mode])
+                else:
+                    self.stderr.write(
+                        self.style.WARNING(
+                            "MYSQL_SSL_MODE configurado, mas o mysqldump atual não suporta --ssl-mode. "
+                            "Use MYSQLDUMP_EXTRA_ARGS para repassar flags compatíveis (ex.: --ssl-ca, --skip-ssl)."
+                        )
+                    )
+            if extra_args:
+                cmd.extend(extra_args)
             cmd = [c for c in cmd if c != ""]
             try:
                 with open(sql_path, "wb") as f_out:
@@ -89,10 +128,8 @@ class Command(BaseCommand):
                 ) from exc
             except subprocess.CalledProcessError as exc:
                 raise CommandError(f"mysqldump falhou: {exc}") from exc
-            gz_path = sql_path.with_suffix(".gz")
-            with open(sql_path, "rb") as f_in, gzip.open(gz_path, "wb", compresslevel=6) as f_out:
-                shutil.copyfileobj(f_in, f_out)
-            out_file = gz_path
+            out_file = sql_path
+            content_type = "application/sql"
         else:
             raise CommandError(f"Engine não suportado: {engine}")
 
