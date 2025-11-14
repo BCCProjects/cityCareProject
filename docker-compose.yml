@@ -22,7 +22,7 @@ services:
     env_file:
       - city_care/.env
     environment:
-      MYSQL_HOST: host.docker.internal
+      MYSQL_HOST: db
       CHANNEL_LAYER_BACKEND: redis
       CHANNEL_LAYER_REDIS_URL: redis://redis:6379/0
     volumes:
@@ -31,7 +31,7 @@ services:
       - "8000:8000"
     depends_on:
       - redis
-    #   - db
+      # - db
 
   redis:
     image: redis:7.4-alpine
@@ -56,7 +56,7 @@ services:
   #   depends_on:
   #     - backend
 
-    scheduler:
+  scheduler:
     build:
       context: .
       dockerfile: docker/backend.Dockerfile
