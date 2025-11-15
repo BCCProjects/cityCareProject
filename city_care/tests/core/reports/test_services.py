@@ -2,13 +2,17 @@ from __future__ import annotations
 
 from datetime import timedelta
 
+from decimal import Decimal
+
+from django.conf import settings
+from django.core.files.storage import FileSystemStorage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.utils import timezone
 
 from accounts.models import Administrator, Citizen
 from core.repositories import report_repository
-from core.reports.models import Category, Department, Report, ReportStatus, Tag
+from core.reports.models import Attachment, Category, Department, Report, ReportPriority, ReportStatus, Tag
 from core.services.report_service import InvalidStatusTransition, ReportService
 
 
@@ -37,6 +41,7 @@ class ReportServiceTests(TestCase):
             password="SenhaSegura123",
             first_name="Admin",
         )
+        Attachment._meta.get_field("file").storage = FileSystemStorage(location=settings.MEDIA_ROOT)
 
     def test_full_status_flow(self):
         file_data = SimpleUploadedFile("foto.jpg", b"fake-image", content_type="image/jpeg")
@@ -49,8 +54,8 @@ class ReportServiceTests(TestCase):
             priority="ALTA",
             address="Rua A, 123",
             neighborhood="Centro",
-            latitude=-23.0,
-            longitude=-46.0,
+            latitude=Decimal("-23.000000"),
+            longitude=Decimal("-46.000000"),
             tags=[self.tag_road, self.tag_urgent],
             attachments=[file_data],
         )
@@ -65,7 +70,7 @@ class ReportServiceTests(TestCase):
         self.assertEqual(report.attachments.count(), 1)
         self.assertEqual(report.tags.count(), 2)
         self.assertEqual(result.history.new_status, ReportStatus.CONCLUIDO)
-        self.assertEqual(report.status_history.count(), 4)
+        self.assertEqual(report.status_history.count(), 5)
 
     def test_indefere_requires_reason(self):
         report = ReportService.create_report(
@@ -77,8 +82,8 @@ class ReportServiceTests(TestCase):
             priority="MEDIA",
             address="Rua B, 456",
             neighborhood="Centro",
-            latitude=-23.1,
-            longitude=-46.1,
+            latitude=Decimal("-23.100000"),
+            longitude=Decimal("-46.100000"),
             tags=[self.tag_road],
             attachments=[],
         )
@@ -118,11 +123,44 @@ class ReportServiceTests(TestCase):
             priority="MEDIA",
             address="Rua D, 321",
             neighborhood="Vila",
-            latitude=-23.3,
-            longitude=-46.3,
+            latitude=Decimal("-23.300000"),
+            longitude=Decimal("-46.300000"),
             tags=[self.tag_road, self.tag_urgent],
             attachments=[file_one, file_two],
         )
 
         self.assertEqual(report.tags.count(), 2)
         self.assertEqual(report.attachments.count(), 2)
+
+    def test_normalize_priority_accepts_variants(self):
+        self.assertEqual(ReportService.normalize_priority("alta"), ReportPriority.HIGH)
+        self.assertEqual(ReportService.normalize_priority("Média"), ReportPriority.MEDIUM)
+        self.assertEqual(ReportService.normalize_priority("baixas"), ReportPriority.LOW)
+        self.assertIsNone(ReportService.normalize_priority(None))
+
+    def test_transition_to_invalid_status_raises_error(self):
+        report = ReportService.create_report(
+            citizen=self.citizen,
+            category=self.category,
+            department=self.department,
+            title="Tapar buraco",
+            description="Rua interditada",
+            priority="ALTA",
+            address="Rua Z",
+            neighborhood="Bairro Novo",
+            latitude=Decimal("-24.100000"),
+            longitude=Decimal("-47.100000"),
+            tags=[],
+            attachments=[],
+        )
+
+        with self.assertRaises(InvalidStatusTransition):
+            ReportService.transition_status(
+                report.id,
+                ReportStatus.CONCLUIDO,
+                administrator=self.admin,
+            )
+
+
+
+

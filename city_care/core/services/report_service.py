@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from accounts.models import Administrator, Citizen
 from core.repositories import report_repository
-from core.reports.models import Report, ReportStatus, StatusHistory, Tag
+from core.reports.models import Report, ReportPriority, ReportStatus, StatusHistory, Tag
 
 
 class InvalidStatusTransition(Exception):
