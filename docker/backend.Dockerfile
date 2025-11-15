@@ -13,6 +13,7 @@ RUN apt-get update \
         pkg-config \
         curl \
         cron \
+        netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 COPY city_care/requirements.txt /tmp/requirements.txt
@@ -20,6 +21,9 @@ RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 COPY city_care /app
 
+COPY docker/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
 EXPOSE 8000
 
-CMD ["sh", "-c", "python manage.py migrate && daphne -b 0.0.0.0 -p 8000 city_care.asgi:application"]
+CMD ["/entrypoint.sh"]
