@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Iterable
@@ -22,6 +22,19 @@ class StatusTransitionResult:
 
 
 class ReportService:
+    PRIORITY_CANONICAL_VALUES: dict[str, str] = {
+        ReportPriority.LOW: ReportPriority.LOW,
+        ReportPriority.MEDIUM: ReportPriority.MEDIUM,
+        ReportPriority.HIGH: ReportPriority.HIGH,
+        "BAIXA": ReportPriority.LOW,
+        "BAIXAS": ReportPriority.LOW,
+        "MEDIA": ReportPriority.MEDIUM,
+        "MEDIAS": ReportPriority.MEDIUM,
+        "M\u00c9DIA": ReportPriority.MEDIUM,
+        "M\u00c9DIAS": ReportPriority.MEDIUM,
+        "ALTA": ReportPriority.HIGH,
+        "ALTAS": ReportPriority.HIGH,
+    }
     ALLOWED_TRANSITIONS: dict[str, set[str]] = {
         ReportStatus.ABERTO: {ReportStatus.ANALISANDO, ReportStatus.IGNORADO},
         ReportStatus.ANALISANDO: {ReportStatus.DEFERIDO, ReportStatus.INDEFERIDO, ReportStatus.IGNORADO},
@@ -31,6 +44,13 @@ class ReportService:
         ReportStatus.CONCLUIDO: set(),
         ReportStatus.IGNORADO: set(),
     }
+
+    @classmethod
+    def normalize_priority(cls, priority: str | None) -> str | None:
+        if priority is None:
+            return None
+        normalized = str(priority).strip().upper()
+        return cls.PRIORITY_CANONICAL_VALUES.get(normalized, normalized)
 
     @staticmethod
     def create_report(
@@ -49,12 +69,13 @@ class ReportService:
         attachments: Iterable,
     ) -> Report:
         with transaction.atomic():
+            normalized_priority = ReportService.normalize_priority(priority)
             if Report.objects.filter(category=category, latitude=latitude, longitude=longitude).exists():
                 from django.core.exceptions import ValidationError
 
                 raise ValidationError({
                     "non_field_errors": [
-                        "Já existe uma ocorrência para esta categoria neste mesmo ponto (lat/lng).",
+                        "JÃ¡ existe uma ocorrÃªncia para esta categoria neste mesmo ponto (lat/lng).",
                     ]
                 })
 
@@ -67,7 +88,7 @@ class ReportService:
                 assigned_to=default_admin,
                 title=title,
                 description=description,
-                priority=priority,
+                priority=normalized_priority,
                 address=address,
                 neighborhood=neighborhood,
                 latitude=latitude,
@@ -85,7 +106,7 @@ class ReportService:
                 previous_status=ReportStatus.ABERTO,
                 new_status=ReportStatus.ABERTO,
                 changed_by=default_admin,
-                notes="Atribuição inicial",
+                notes="AtribuiÃ§Ã£o inicial",
             )
         return report
 
@@ -100,7 +121,7 @@ class ReportService:
         denied_reason: str | None = None,
     ) -> StatusTransitionResult:
         if new_status not in ReportStatus.values:
-            raise InvalidStatusTransition("Status de destino inválido.")
+            raise InvalidStatusTransition("Status de destino invÃ¡lido.")
 
         with transaction.atomic():
             report = (
@@ -110,10 +131,10 @@ class ReportService:
             )
             allowed_targets = cls.ALLOWED_TRANSITIONS.get(report.status, set())
             if new_status not in allowed_targets:
-                raise InvalidStatusTransition("Transição não permitida para o status informado.")
+                raise InvalidStatusTransition("TransiÃ§Ã£o nÃ£o permitida para o status informado.")
 
             if new_status == ReportStatus.INDEFERIDO and not denied_reason:
-                raise InvalidStatusTransition("Motivo é obrigatório para indeferir.")
+                raise InvalidStatusTransition("Motivo Ã© obrigatÃ³rio para indeferir.")
 
             now = timezone.now()
             previous_status = report.status

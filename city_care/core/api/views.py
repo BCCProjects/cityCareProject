@@ -195,7 +195,12 @@ class ReportViewSet(
         comment = serializer.save()
         return Response(CommentSerializer(comment).data, status=status.HTTP_201_CREATED)
 
-    @action(detail=False, methods=["get"], url_path="eligibles-ignore")
+    @action(
+        detail=False,
+        methods=["get"],
+        url_path="eligibles-ignore",
+        permission_classes=[IsAdminUser],
+    )
     def eligible_for_ignore(self, request, *args, **kwargs):
         try:
             hours = int(request.query_params.get("hours", 168))
@@ -218,7 +223,9 @@ class DashboardViewSet(viewsets.ViewSet):
         weekly_series = report_repository.get_weekly_series_by_status()
         return Response(
             {
-                "open_by_neighborhood": open_by_neighborhood,
-                "weekly_series": weekly_series,
+                "results": {
+                    "open_by_neighborhood": open_by_neighborhood,
+                    "weekly_series": weekly_series,
+                }
             }
         )

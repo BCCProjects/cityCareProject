@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from typing import Iterable
 
@@ -109,7 +109,7 @@ class ReportCreateSerializer(serializers.Serializer):
     category_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), source="category")
     title = serializers.CharField(max_length=200)
     description = serializers.CharField()
-    priority = serializers.ChoiceField(choices=Report._meta.get_field("priority").choices)
+    priority = serializers.CharField()
     address = serializers.CharField(max_length=255)
     neighborhood = serializers.CharField(max_length=150)
     latitude = serializers.DecimalField(max_digits=9, decimal_places=6)
@@ -124,13 +124,20 @@ class ReportCreateSerializer(serializers.Serializer):
     def validate_attachments(self, value: Iterable):
         max_files = 5
         if len(value) > max_files:
-            raise serializers.ValidationError("Limite de 5 anexos por ocorrência.")
+            raise serializers.ValidationError("Limite de 5 anexos por ocorrÃªncia.")
         for file in value:
             if file.size > 5 * 1024 * 1024:
-                raise serializers.ValidationError("Cada anexo deve ter no máximo 5MB.")
+                raise serializers.ValidationError("Cada anexo deve ter no mÃ¡ximo 5MB.")
             if file.content_type not in {"image/jpeg", "image/png", "image/webp"}:
-                raise serializers.ValidationError("Formato de anexo não permitido.")
+                raise serializers.ValidationError("Formato de anexo nÃ£o permitido.")
         return value
+
+    def validate_priority(self, value: str):
+        normalized = ReportService.normalize_priority(value)
+        valid_values = {choice[0] for choice in Report._meta.get_field('priority').choices}
+        if normalized not in valid_values:
+            raise serializers.ValidationError('Prioridade invalida.')
+        return normalized
 
     def create(self, validated_data):
         citizen: Citizen = self.context["citizen"]
@@ -163,3 +170,9 @@ class CommentCreateSerializer(serializers.ModelSerializer):
         with transaction.atomic():
             comment = Comment.objects.create(report=report, citizen=citizen, **validated_data)
         return comment
+
+
+
+
+
+

@@ -121,6 +121,7 @@ AUTH_USER_MODEL = "accounts.Administrator"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
+        "core.api.authentication.AdminJWTAuthentication",
         "core.api.authentication.CitizenJWTAuthentication",
     ),
     "DEFAULT_PERMISSION_CLASSES": (
