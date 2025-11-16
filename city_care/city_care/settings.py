@@ -159,3 +159,8 @@ _supabase_project_url = os.getenv("SUPABASE_PROJECT_URL", "").rstrip("/")
 if _supabase_project_url and AWS_STORAGE_BUCKET_NAME:
     AWS_S3_CUSTOM_DOMAIN = f"{_supabase_project_url.replace('https://', '').replace('http://', '')}/storage/v1/object/public/{AWS_STORAGE_BUCKET_NAME}"
     AWS_S3_URL_PROTOCOL = "https:"
+
+# REST_FRAMEWORK = {
+#     ...
+#     "EXCEPTION_HANDLER": "core.api.responses.custom_exception_handler",
+# }
