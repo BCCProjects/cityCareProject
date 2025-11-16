@@ -15,7 +15,7 @@ export const setUnauthorizedHandler = (handler: (() => void) | null) => {
 
 export const apiClient = axios.create({
   baseURL: env.apiBaseUrl.replace(/\/$/, ""),
-  timeout: 15000,
+  timeout: 15000, 
 });
 
 apiClient.interceptors.request.use((config) => {

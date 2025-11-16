@@ -1,5 +1,4 @@
 import { useLocalSearchParams } from "expo-router";
-import { Linking, ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { ErrorState } from "@/components/feedback/ErrorState";
 import { LoadingState } from "@/components/feedback/LoadingState";
@@ -7,6 +6,9 @@ import { Card } from "@/components/ui/Card";
 import { Screen } from "@/components/ui/Screen";
 import { useReportDetail } from "@/features/reports/hooks";
 import { formatDate } from "@/utils/format";
+
+import { Pressable } from "react-native";
+import {View, Text, Image, ScrollView, Linking, StyleSheet,} from "react-native";
 
 export default function ReportDetailScreen() {
   const params = useLocalSearchParams();
@@ -89,22 +91,25 @@ export default function ReportDetailScreen() {
           </Card>
         ) : null}
 
-        {data.attachments.length ? (
-          <Card>
-            <Text style={styles.sectionTitle}>Anexos</Text>
-            <View style={styles.attachmentList}>
-              {data.attachments.map((attachment) => (
-                <Text
-                  key={attachment.id}
-                  style={styles.attachmentLink}
-                  onPress={() => Linking.openURL(attachment.file)}
-                >
-                  {attachment.description || `Anexo ${attachment.id}`}
-                </Text>
-              ))}
-            </View>
-          </Card>
-        ) : null}
+       {Array.isArray(data.attachments) && data.attachments.length > 0 ? (
+        <Card>
+          <Text style={styles.sectionTitle}>Anexos</Text>
+          <View style={styles.attachmentList}>
+            {data.attachments.map((attachment) => (
+              <Pressable
+                key={attachment.id}
+                onPress={() => Linking.openURL(attachment.file)}
+              >
+                <Image
+                  source={{ uri: attachment.file }}
+                  style={styles.attachmentImage}
+                  resizeMode="cover"
+                />
+              </Pressable>
+            ))}
+          </View>
+        </Card>
+       ) : null}
       </ScrollView>
     </Screen>
   );
@@ -180,4 +185,10 @@ const styles = StyleSheet.create({
     color: "#2563eb",
     textDecorationLine: "underline",
   },
+attachmentImage: {
+  width: 300,   
+  height: 200,  
+  borderRadius: 10,
+  marginBottom: 10,
+}
 });
