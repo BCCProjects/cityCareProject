@@ -74,6 +74,6 @@ class ReportModelValidationTests(TestCase):
             status=ReportStatus.INDEFERIDO,
             denied_reason="Documentação incompleta",
         )
-        report.full_clean()  # should not raise
+        report.full_clean()
         report.save()
         self.assertEqual(report.denied_reason, "Documentação incompleta")

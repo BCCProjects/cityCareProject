@@ -67,12 +67,12 @@ def clear_alias_map():
 @pytest.mark.django_db
 def test_login_flow(client, django_user_model):
     user = django_user_model.objects.create_user(
-        username="ana",
+        username="fer",
         password="123"
     )
 
     response = client.post("/login/", {
-        "username": "ana",
+        "username": "fer",
         "password": "123"
     })
 

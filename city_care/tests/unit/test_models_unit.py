@@ -24,13 +24,13 @@ def test_administrator_str_and_defaults():
 def test_citizen_str_and_password_hashing():
     citizen = Citizen(
         email="citizen@example.com",
-        full_name="Fulano de Tal",
+        full_name="Fernando Lopes",
         phone="11999999999",
         password="pbkdf2_sha256$dummy$hash",
     )
     citizen.set_password("SenhaMuitoSegura123")
     assert citizen.password.startswith("pbkdf2_")
-    assert str(citizen) == "Fulano de Tal"
+    assert str(citizen) == "Fernando Lopes"
 
 
 def test_department_and_category_str():

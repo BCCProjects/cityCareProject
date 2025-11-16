@@ -99,11 +99,13 @@ class Report(models.Model):
         constraints = [
             models.CheckConstraint(
                 name="check_latitude_range",
-                check=models.Q(latitude__gte=-90) & models.Q(latitude__lte=90),
+                # check=models.Q(latitude__gte=-90) & models.Q(latitude__lte=90), #mudei aqui para passar full --- IGNORE ---
+                condition=models.Q(latitude__gte=-90) & models.Q(latitude__lte=90),
             ),
             models.CheckConstraint(
                 name="check_longitude_range",
-                check=models.Q(longitude__gte=-180) & models.Q(longitude__lte=180),
+                # check=models.Q(longitude__gte=-180) & models.Q(longitude__lte=180), #mudei aqui para passar full --- IGNORE ---
+                condition=models.Q(longitude__gte=-180) & models.Q(longitude__lte=180),
             ),
             models.UniqueConstraint(
                 fields=("category", "latitude", "longitude"),
