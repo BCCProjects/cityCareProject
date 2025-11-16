@@ -4,8 +4,6 @@ from rest_framework import filters, mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.authentication import SessionAuthentication
-from rest_framework.response import Response
-
 from accounts.models import Citizen, Administrator
 from core.api.serializers import (
     CategorySerializer,
@@ -21,9 +19,11 @@ from core.api.serializers import (
 from core.repositories import report_repository
 from core.reports.models import Category, Department, Report, ReportStatus, Tag
 from core.api.authentication import AdminJWTAuthentication, CitizenJWTAuthentication
+from core.api.responses import ApiResponseMixin
 
 
 class CategoryViewSet(
+    ApiResponseMixin,
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
@@ -55,19 +55,30 @@ class CategoryViewSet(
         page = self.paginate_queryset(qs)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+            paginated = self.get_paginated_response(serializer.data)
+            return self.success(data=paginated.data, code="categories.list")
         serializer = self.get_serializer(qs, many=True)
-        return Response(serializer.data)
+        return self.success(data=serializer.data, code="categories.list")
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         category = serializer.save()
         output = CategorySerializer(category, context=self.get_serializer_context())
-        headers = self.get_success_headers(output.data)
-        return Response(output.data, status=status.HTTP_201_CREATED, headers=headers)
+        return self.success(
+            data=output.data,
+            status_code=status.HTTP_201_CREATED,
+            code="categories.create",
+            message="Categoria criada com sucesso.",
+        )
+
+    def retrieve(self, request, *args, **kwargs):
+        response = super().retrieve(request, *args, **kwargs)
+        return self.success(data=response.data, code="categories.detail")
 
 
 class TagViewSet(
+    ApiResponseMixin,
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
@@ -91,11 +102,24 @@ class TagViewSet(
         serializer.is_valid(raise_exception=True)
         tag = serializer.save()
         output = TagSerializer(tag, context=self.get_serializer_context())
-        headers = self.get_success_headers(output.data)
-        return Response(output.data, status=status.HTTP_201_CREATED, headers=headers)
+        return self.success(
+            data=output.data,
+            status_code=status.HTTP_201_CREATED,
+            code="tags.create",
+            message="Tag criada com sucesso.",
+        )
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        return self.success(data=response.data, code="tags.list")
+
+    def retrieve(self, request, *args, **kwargs):
+        response = super().retrieve(request, *args, **kwargs)
+        return self.success(data=response.data, code="tags.detail")
 
 
 class DepartmentViewSet(
+    ApiResponseMixin,
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
@@ -119,11 +143,24 @@ class DepartmentViewSet(
         serializer.is_valid(raise_exception=True)
         department = serializer.save()
         output = DepartmentSerializer(department, context=self.get_serializer_context())
-        headers = self.get_success_headers(output.data)
-        return Response(output.data, status=status.HTTP_201_CREATED, headers=headers)
+        return self.success(
+            data=output.data,
+            status_code=status.HTTP_201_CREATED,
+            code="departments.create",
+            message="Departamento criado com sucesso.",
+        )
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        return self.success(data=response.data, code="departments.list")
+
+    def retrieve(self, request, *args, **kwargs):
+        response = super().retrieve(request, *args, **kwargs)
+        return self.success(data=response.data, code="departments.detail")
 
 
 class ReportViewSet(
+    ApiResponseMixin,
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
@@ -172,6 +209,14 @@ class ReportViewSet(
             return ReportDetailSerializer
         return ReportListSerializer
 
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        return self.success(data=response.data, code="reports.list")
+
+    def retrieve(self, request, *args, **kwargs):
+        response = super().retrieve(request, *args, **kwargs)
+        return self.success(data=response.data, code="reports.detail")
+
     def perform_create(self, serializer):
         serializer.context["citizen"] = self.request.user
         report = serializer.save()
@@ -183,8 +228,12 @@ class ReportViewSet(
         serializer.is_valid(raise_exception=True)
         report = serializer.save()
         output = ReportDetailSerializer(report, context=self.get_serializer_context())
-        headers = self.get_success_headers(output.data)
-        return Response(output.data, status=status.HTTP_201_CREATED, headers=headers)
+        return self.success(
+            data=output.data,
+            status_code=status.HTTP_201_CREATED,
+            code="reports.create",
+            message="Ocorrência registrada.",
+        )
 
     @action(detail=True, methods=["post"], url_path="comments")
     def add_comment(self, request, *args, **kwargs):
@@ -193,7 +242,12 @@ class ReportViewSet(
         serializer.context.update({"report": report, "citizen": request.user})
         serializer.is_valid(raise_exception=True)
         comment = serializer.save()
-        return Response(CommentSerializer(comment).data, status=status.HTTP_201_CREATED)
+        return self.success(
+            data=CommentSerializer(comment).data,
+            status_code=status.HTTP_201_CREATED,
+            code="reports.comments.create",
+            message="Comentário adicionado.",
+        )
 
     @action(
         detail=False,
@@ -205,27 +259,31 @@ class ReportViewSet(
         try:
             hours = int(request.query_params.get("hours", 168))
         except (TypeError, ValueError):
-            return Response({"detail": "Parâmetro de horas inválido."}, status=status.HTTP_400_BAD_REQUEST)
+            return self.error(
+                message="Parâmetro de horas inválido.",
+                code="reports.eligible.invalid_hours",
+            )
         data = report_repository.get_reports_eligible_for_ignore(hours)
-        return Response({"results": data})
+        return self.success(data={"results": data}, code="reports.eligible.list")
 
     @action(detail=False, methods=["get"], url_path="avg-resolution", permission_classes=[IsAdminUser])
     def average_resolution(self, request, *args, **kwargs):
         data = report_repository.get_average_resolution_time_by_category()
-        return Response({"results": data})
+        return self.success(data={"results": data}, code="reports.avg_resolution")
 
 
-class DashboardViewSet(viewsets.ViewSet):
+class DashboardViewSet(ApiResponseMixin, viewsets.ViewSet):
     permission_classes = [IsAdminUser]
 
     def list(self, request, *args, **kwargs):
         open_by_neighborhood = report_repository.get_open_reports_grouped_by_neighborhood()
         weekly_series = report_repository.get_weekly_series_by_status()
-        return Response(
-            {
+        return self.success(
+            data={
                 "results": {
                     "open_by_neighborhood": open_by_neighborhood,
                     "weekly_series": weekly_series,
                 }
-            }
+            },
+            code="dashboard.summary",
         )
