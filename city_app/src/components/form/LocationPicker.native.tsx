@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import type { MapPressEvent, Region } from "react-native-maps";
+import MapView, { Marker, MapPressEvent, PROVIDER_GOOGLE, Region } from "react-native-maps";
 import * as Location from "expo-location";
 
 import { Button } from "@/components/ui/Button";
 import { env } from "@/config/env";
-
-type MapModule = typeof import("react-native-maps");
 
 type PlaceSuggestion = {
   placeId: string;
@@ -33,22 +31,6 @@ const formatCoordinate = (value: number) => value.toFixed(6);
 const generateSessionToken = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 
 export function LocationPicker({ latitude, longitude, onChange, error }: LocationPickerProps) {
-  const mapModule = useMemo<MapModule | null>(() => {
-    if (Platform.OS === "web") {
-      return null;
-    }
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      return require("react-native-maps");
-    } catch (err) {
-      console.warn("react-native-maps não está disponível nesta plataforma.", err);
-      return null;
-    }
-  }, []);
-  const MapViewComponent = mapModule?.default;
-  const MarkerComponent = mapModule?.Marker;
-  const providerGoogle = mapModule?.PROVIDER_GOOGLE;
-
   const [region, setRegion] = useState<Region>(() => {
     const lat = Number(latitude);
     const lng = Number(longitude);
@@ -296,25 +278,17 @@ export function LocationPicker({ latitude, longitude, onChange, error }: Locatio
         </Text>
       )}
 
-      {MapViewComponent ? (
-        <View style={styles.mapWrapper}>
-          <MapViewComponent
-            style={StyleSheet.absoluteFill}
-            region={region}
-            onRegionChangeComplete={setRegion}
-            onPress={handleMapPress}
-            provider={Platform.OS === "android" ? providerGoogle : undefined}
-          >
-            {markerCoordinate && MarkerComponent ? <MarkerComponent coordinate={markerCoordinate} /> : null}
-          </MapViewComponent>
-        </View>
-      ) : (
-        <View style={[styles.mapWrapper, styles.mapFallback]}>
-          <Text style={styles.mapFallbackText}>
-            O mapa interativo não está disponível nesta plataforma. Utilize o campo de busca para definir a localização.
-          </Text>
-        </View>
-      )}
+      <View style={styles.mapWrapper}>
+        <MapView
+          style={StyleSheet.absoluteFill}
+          region={region}
+          onRegionChangeComplete={setRegion}
+          onPress={handleMapPress}
+          provider={Platform.OS === "android" ? PROVIDER_GOOGLE : undefined}
+        >
+          {markerCoordinate ? <Marker coordinate={markerCoordinate} /> : null}
+        </MapView>
+      </View>
 
       <View style={styles.coordinatesRow}>
         <View style={styles.coordinateCard}>
@@ -413,16 +387,6 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     marginBottom: 12,
   },
-  mapFallback: {
-    backgroundColor: "#e2e8f0",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 16,
-  },
-  mapFallbackText: {
-    color: "#475569",
-    textAlign: "center",
-  },
   coordinatesRow: {
     flexDirection: "row",
     gap: 12,
@@ -459,3 +423,4 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
 });
+
