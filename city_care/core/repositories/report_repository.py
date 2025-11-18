@@ -48,7 +48,7 @@ def get_average_resolution_time_by_category():
     if vendor == "mysql":
         sql = """
             SELECT c.name AS category_name,
-                   AVG(TIMESTAMPDIFF(HOUR, r.created_at, r.last_status_at)) AS average_hours
+                   AVG(fn_report_resolution_hours(r.created_at, r.last_status_at)) AS average_hours
             FROM core_reports_report r
             INNER JOIN core_reports_category c ON c.id = r.category_id
             WHERE r.status = %s
@@ -85,14 +85,32 @@ def get_open_reports_grouped_by_neighborhood():
     return list(queryset)
 
 
-def get_weekly_series_by_status():
+def get_weekly_series_by_status(start_date=None, end_date=None):
+    vendor = connection.vendor
+
+    if vendor == "mysql" and not start_date and not end_date:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT week, status, total
+                FROM vw_weekly_reports_by_status
+                ORDER BY week ASC
+                """
+            )
+            return _dictfetchall(cursor)
+
     from django.db.models import Count
     from django.db.models.functions import TruncWeek
     from core.reports.models import Report
 
+    queryset = Report.objects.all()
+    if start_date:
+        queryset = queryset.filter(created_at__date__gte=start_date)
+    if end_date:
+        queryset = queryset.filter(created_at__date__lte=end_date)
+
     queryset = (
-        Report.objects.all()
-        .annotate(week=TruncWeek("created_at"))
+        queryset.annotate(week=TruncWeek("created_at"))
         .values("week", "status")
         .order_by("week")
         .annotate(total=Count("id"))

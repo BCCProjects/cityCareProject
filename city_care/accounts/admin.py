@@ -63,6 +63,18 @@ class CitizenAdmin(admin.ModelAdmin):
     full_name.short_description = "Full name"
     full_name.admin_order_field = "first_name"
 
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_view_permission(self, request, obj=None):
+        return True
+
+    def has_delete_permission(self, request, obj=None):
+        return True
+
 
 @admin.register(State)
 class StateAdmin(admin.ModelAdmin):

@@ -13,7 +13,7 @@ done
 echo "MySQL is up."
 
 echo "Making Django Migrations ..."
-python manage.py migrate --noinput
+python manage.py makemigrations --noinput
 
 echo "Running Django Migrations..."
 python manage.py migrate --noinput
