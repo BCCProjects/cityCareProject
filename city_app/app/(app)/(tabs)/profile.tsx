@@ -18,7 +18,7 @@ export default function ProfileScreen() {
       await signOut();
     } catch (error) {
       console.error("Failed to sign out", error);
-      Alert.alert("Sair", "NÃ£o foi possÃ­vel encerrar a sessÃ£o. Tente novamente.");
+      Alert.alert("Sair", "Não foi possível encerrar a sessão. Tente novamente.");
     }
   };
 

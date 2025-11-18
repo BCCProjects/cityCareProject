@@ -1,5 +1,6 @@
 import { PropsWithChildren } from "react";
-import { SafeAreaView, ScrollView, StyleProp, StyleSheet, View, ViewStyle } from "react-native";
+import { ScrollView, StyleProp, StyleSheet, View, ViewStyle } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type ScreenProps = PropsWithChildren<{
   scrollable?: boolean;

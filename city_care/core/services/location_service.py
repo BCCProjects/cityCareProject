@@ -78,10 +78,10 @@ def reverse_geocode(latitude: Decimal | float, longitude: Decimal | float) -> Re
         response = _SESSION.get(_BASE_URL, params=params, headers=headers, timeout=_TIMEOUT)
         response.raise_for_status()
         payload = response.json()
-    except requests.RequestException as exc:  # pragma: no cover - network failure path
+    except requests.RequestException as exc:
         logger.warning("Reverse geocoding failed: %s", exc)
         raise LocationResolutionError("Nao foi possivel consultar o servico de geocodificacao.") from exc
-    except json.JSONDecodeError as exc:  # pragma: no cover - invalid JSON
+    except json.JSONDecodeError as exc:
         logger.warning("Reverse geocoding returned invalid JSON: %s", exc)
         raise LocationResolutionError("Resposta invalida do servico de geocodificacao.") from exc
 

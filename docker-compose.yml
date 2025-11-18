@@ -1,19 +1,19 @@
 version: "3.9"
 
 services:
-  # db:
-  #   image: mysql:8.4
-  #   command: --default-authentication-plugin=mysql_native_password
-  #   restart: unless-stopped
-  #   environment:
-  #     MYSQL_DATABASE: ${MYSQL_DATABASE:-city_care}
-  #     MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD:-changeme}
-  #     MYSQL_PASSWORD: ${MYSQL_PASSWORD:-changeme}
-  #     MYSQL_USER: ${MYSQL_USER:-root}
-  #   ports:
-  #     - "3306:3306"
-  #   volumes:
-  #     - mysql_data:/var/lib/mysql
+  db:
+    image: mysql:8.4
+    command: --mysql-native-password=ON
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-city_care}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-changeme}
+      MYSQL_USER: ${MYSQL_USER:-dev}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
 
   backend:
     build:
@@ -22,7 +22,7 @@ services:
     env_file:
       - city_care/.env
     environment:
-      MYSQL_HOST: host.docker.internal
+      MYSQL_HOST: db
       CHANNEL_LAYER_BACKEND: redis
       CHANNEL_LAYER_REDIS_URL: redis://redis:6379/0
     volumes:
@@ -31,7 +31,7 @@ services:
       - "8000:8000"
     depends_on:
       - redis
-    #   - db
+      - db
 
   redis:
     image: redis:7.4-alpine
@@ -39,24 +39,24 @@ services:
     ports:
       - "6379:6379"
 
-  # frontend:
-  #   build:
-  #     context: .
-  #     dockerfile: docker/frontend.Dockerfile
-  #   env_file:
-  #     - city_app/.env
-  #   environment:
-  #     EXPO_PUBLIC_API_BASE_URL: ${EXPO_PUBLIC_API_BASE_URL:-http://backend:8000/api}
-  #   volumes:
-  #     - ./city_app:/app
-  #     - frontend_node_modules:/app/node_modules
-  #   ports:
-  #     - "3000:3000"
-  #     - "19000:19000"
-  #   depends_on:
-  #     - backend
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    env_file:
+      - city_app/.env
+    environment:
+      EXPO_PUBLIC_API_BASE_URL: ${EXPO_PUBLIC_API_BASE_URL:-http://backend:8000/api}
+    volumes:
+      - ./city_app:/app
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - "3000:3000"
+      - "19000:19000"
+    depends_on:
+      - backend
 
-    scheduler:
+  scheduler:
     build:
       context: .
       dockerfile: docker/backend.Dockerfile

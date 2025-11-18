@@ -284,6 +284,7 @@ class ReportViewSet(
 
 class DashboardViewSet(viewsets.ViewSet):
     permission_classes = [IsAdminUser]
+    authentication_classes = (EmployeeJWTAuthentication, SessionAuthentication)
 
     def list(self, request, *args, **kwargs):
         open_by_neighborhood = report_repository.get_open_reports_grouped_by_neighborhood()
@@ -293,6 +294,79 @@ class DashboardViewSet(viewsets.ViewSet):
                 "open_by_neighborhood": open_by_neighborhood,
                 "weekly_series": weekly_series,
             }
+        )
+
+    @action(detail=False, methods=["post"], url_path="export")
+    def export(self, request, *args, **kwargs):
+        """
+        Export dashboard data as JSON or CSV for admins.
+
+        Body parameters (JSON):
+        - format: "json" (default) or "csv"
+        - start_date, end_date: optional, YYYY-MM-DD, filter by report.created_at
+        """
+        from datetime import datetime
+        from django.http import HttpResponse
+        import csv
+
+        data = request.data or {}
+        export_format = str(data.get("format", "json")).lower()
+        start_date_raw = data.get("start_date")
+        end_date_raw = data.get("end_date")
+
+        start_date = end_date = None
+        for label, raw in (("start_date", start_date_raw), ("end_date", end_date_raw)):
+            if raw:
+                try:
+                    parsed = datetime.strptime(raw, "%Y-%m-%d").date()
+                    if label == "start_date":
+                        start_date = parsed
+                    else:
+                        end_date = parsed
+                except ValueError:
+                    return Response(
+                        {"detail": f"Formato inválido para {label}. Use YYYY-MM-DD."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+        open_by_neighborhood = report_repository.get_open_reports_grouped_by_neighborhood()
+        weekly_series = report_repository.get_weekly_series_by_status(start_date=start_date, end_date=end_date)
+
+        payload = {
+            "open_by_neighborhood": open_by_neighborhood,
+            "weekly_series": weekly_series,
+        }
+
+        if export_format == "json":
+            # DRF Response already serializes as JSON;
+            # Content-Disposition hints browser to download.
+            response = Response(payload)
+            response["Content-Disposition"] = 'attachment; filename="dashboard_report.json"'
+            return response
+
+        if export_format == "csv":
+            response = HttpResponse(content_type="text/csv")
+            response["Content-Disposition"] = 'attachment; filename="dashboard_report.csv"'
+
+            writer = csv.writer(response)
+
+            writer.writerow(["Open reports by neighborhood"])
+            writer.writerow(["neighborhood", "priority", "total"])
+            for item in open_by_neighborhood:
+                writer.writerow([item.get("neighborhood") or "", item.get("priority") or "", item.get("total") or 0])
+
+            writer.writerow([])
+            writer.writerow(["Weekly series by status"])
+            writer.writerow(["week", "status", "total"])
+            for item in weekly_series:
+                week = item.get("week")
+                writer.writerow([week, item.get("status") or "", item.get("total") or 0])
+
+            return response
+
+        return Response(
+            {"detail": "Formato inválido. Use 'json' ou 'csv'."},
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
 
