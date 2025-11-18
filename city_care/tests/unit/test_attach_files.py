@@ -7,23 +7,28 @@ import pytest
 from django.core.files.base import ContentFile
 
 from accounts.models import Administrator, Citizen
+from tests.utils import ensure_location
 from core.reports.models import Category, Department, Report
 from core.services.report_service import ReportService
 
 
 @pytest.fixture
 def empty_report(db):
+    _, city, organization = ensure_location("Attach City")
     Administrator.objects.create_superuser(
         email="admin@example.com",
         password="Senha123",
         first_name="Admin",
+        organization=organization,
     )
     citizen = Citizen.objects.create(
         email="citizen@example.com",
-        full_name="Fulano",
+        first_name="Fulano",
+        last_name="da Silva",
         phone="11999999999",
         password="pbkdf2_sha256$260000$dummy$hash",
         is_active=True,
+        city=city,
     )
     department = Department.objects.create(name="Infra", email="infra@city.gov", phone="11988888888")
     category = Category.objects.create(department=department, name="Buracos", slug="buracos")
@@ -31,6 +36,8 @@ def empty_report(db):
         citizen=citizen,
         category=category,
         department=department,
+        city=city,
+        organization=organization,
         title="Buraco na rua",
         description="Teste",
         address="Rua X",

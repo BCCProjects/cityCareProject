@@ -8,6 +8,7 @@ from rest_framework.test import APIClient
 
 from accounts.models import Administrator
 from core.api.responses import ApiResponseMixin, custom_exception_handler
+from tests.utils import ensure_location
 
 
 class DummyView(ApiResponseMixin):
@@ -46,10 +47,12 @@ def test_custom_exception_handler_wraps_validation_error(rf):
 
 @pytest.mark.django_db
 def test_dashboard_view_returns_standard_response():
+    _, _, organization = ensure_location("Dashboard City")
     admin = Administrator.objects.create_superuser(
         email="admin@example.com",
         password="Senha123!",
         first_name="Admin",
+        organization=organization,
     )
     client = APIClient()
     client.force_authenticate(user=admin)

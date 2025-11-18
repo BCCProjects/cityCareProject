@@ -73,7 +73,7 @@ def test_tag_update_as_admin(api_client, admin_tokens, auth_header):
     )
 
     assert response.status_code == 200
-    assert response.json()["name"] == "Buraco Nova"
+    assert response.json()["data"]["name"] == "Buraco Nova"
 
 
 @pytest.mark.django_db

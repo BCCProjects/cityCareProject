@@ -1,30 +1,30 @@
 import pytest
-from django.utils import timezone
 from django.contrib.auth.hashers import make_password
+from django.utils import timezone
 
 from accounts.models import Administrator, Citizen
-from core.reports.models import (
-    Report,
-    Category,
-    Department,
-    ReportStatus,
-)
-from core.services.report_service import ReportService, InvalidStatusTransition
+from core.reports.models import Category, Department, Report, ReportStatus
+from core.services.report_service import InvalidStatusTransition, ReportService
+from tests.utils import ensure_location
 
 
 @pytest.fixture
 def setup_data(db):
+    _, city, organization = ensure_location("Transition City")
     citizen = Citizen.objects.create(
         email="citizen@test.com",
-        full_name="User Test",
+        first_name="User",
+        last_name="Test",
         phone="123",
         password=make_password("123456"),
+        city=city,
     )
 
     admin = Administrator.objects.create(
         email="admin@test.com",
         first_name="Admin",
         password=make_password("123456"),
+        organization=organization,
     )
 
     dep = Department.objects.create(name="Infra", email="i@test.com", phone="123")
@@ -34,6 +34,8 @@ def setup_data(db):
         citizen=citizen,
         category=cat,
         department=dep,
+        city=city,
+        organization=organization,
         title="Buraco grande",
         description="Existe um buraco enorme na rua.",
         address="Rua A",

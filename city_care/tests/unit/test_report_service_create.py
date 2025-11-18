@@ -1,27 +1,34 @@
 import pytest
-from accounts.models import Citizen, Administrator
-from core.reports.models import Category, Department, Tag, Report
-from core.services.report_service import ReportService
+from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ValidationError
+from accounts.models import Citizen, Administrator
+from core.reports.models import Category, Department, Report, ReportPriority, ReportStatus, Tag
+from core.services.report_service import ReportService
+
+from tests.utils import ensure_location, force_resolved_city
 
 @pytest.fixture
 def basic_structures(db):
-    dep = Department.objects.create(name="Infra")
-    cat = Category.objects.create(name="Iluminação", department=dep)
+    _, city, organization = ensure_location("Infra City")
+    dep = Department.objects.create(name="Infra", email="infra@test.com", phone="11999999999")
+    cat = Category.objects.create(name="Iluminacao", slug="iluminacao-fixture", department=dep)
 
     admin = Administrator.objects.create_superuser(
         email="admin@test.com",
         password="123456",
-        first_name="Admin"
+        first_name="Admin",
+        organization=organization,
     )
 
     citizen = Citizen.objects.create(
         email="citizen@test.com",
-        full_name="User Test",
+        first_name="User",
+        last_name="Test",
         phone="123",
-        password="pbkdf2_test"
+        password=make_password("Senha123"),
+        city=city,
     )
-
+    force_resolved_city(city)
     return citizen, cat, dep, admin
 
 
@@ -45,8 +52,8 @@ def test_create_report_basic(basic_structures):
 
     assert report.pk is not None
     assert report.title == "Lâmpada queimada"
-    assert report.priority == "HIGH"
-    assert report.status == "ABERTO"
+    assert report.priority == ReportPriority.HIGH
+    assert report.status == ReportStatus.ABERTO
 
 
 def test_create_report_duplication(basic_structures):
@@ -88,8 +95,8 @@ def test_create_report_tags_and_attachments(basic_structures, tmp_path):
     citizen, cat, dep, admin = basic_structures
 
     # Tag NÃO tem category
-    tag1 = Tag.objects.create(name="urgente")
-    tag2 = Tag.objects.create(name="iluminação")
+    tag1 = Tag.objects.create(name="urgente", slug="urgente")
+    tag2 = Tag.objects.create(name="iluminação", slug="iluminacao")
 
     class DummyAttachment:
         def __init__(self, file):

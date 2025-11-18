@@ -211,3 +211,20 @@ class StatusHistory(models.Model):
 
     class Meta:
         ordering = ("-created_at",)
+
+
+class ReportComment(models.Model):
+    report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name="comments")
+    citizen = models.ForeignKey(Citizen, null=True, blank=True, on_delete=models.SET_NULL)
+    employee = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="report_comments",
+    )
+    message = models.TextField()
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ("created_at",)

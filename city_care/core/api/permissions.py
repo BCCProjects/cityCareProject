@@ -24,6 +24,11 @@ class InternalAPIPermission(BasePermission):
         return request.META.get(meta_key)
 
     def has_permission(self, request, view) -> bool:  # type: ignore[override]
+        # Staff/administrator JWTs can call internal endpoints
+        user = getattr(request, "user", None)
+        if getattr(user, "is_authenticated", False) and getattr(user, "is_staff", False):
+            return True
+
         expected_user = getattr(settings, "API_SECURITY_USER", None)
         expected_app = getattr(settings, "API_SECURITY_APP", None)
         expected_signature = getattr(settings, "API_SECURITY_SIGNATURE", None)

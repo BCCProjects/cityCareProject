@@ -6,11 +6,10 @@ import pytest
 from django.urls import reverse
 from rest_framework.test import APIClient
 
-from django.core.files.storage import FileSystemStorage
-
 from accounts.models import Citizen
 from core.reports.models import Attachment
 from core.services.report_service import ReportService
+from tests.utils import ensure_location
 
 
 @pytest.fixture
@@ -27,23 +26,12 @@ def _ensure_citizen_staff_attribute():
 
 @pytest.fixture(autouse=True)
 def _fix_report_service_create(monkeypatch):
-    original = ReportService.create_report.__func__
+    original = ReportService.create_report
 
     def wrapper(cls, citizen, **kwargs):
-        return original(cls, citizen=citizen, **kwargs)
+        return original(citizen=citizen, **kwargs)
 
     monkeypatch.setattr(ReportService, "create_report", classmethod(wrapper))
-
-
-@pytest.fixture(autouse=True)
-def _use_local_attachment_storage(monkeypatch, settings, tmp_path):
-    settings.USE_SUPABASE_ATTACHMENTS = False
-    storage = FileSystemStorage(location=tmp_path / "attachments")
-    field = Attachment._meta.get_field("file")
-    original = field.storage
-    field.storage = storage
-    yield
-    field.storage = original
 
 
 @pytest.fixture
@@ -62,11 +50,17 @@ def security_headers(settings):
 def create_citizen_user(api_client, security_headers):
     def _create(**overrides):
         password = overrides.pop("password", "Senha123!")
+        city_id = overrides.pop("city_id", None)
+        if city_id is None:
+            _, city, _ = ensure_location("Citizen API City")
+            city_id = city.id
         payload = {
             "email": overrides.pop("email", f"citizen_{uuid4().hex}@example.com"),
-            "full_name": overrides.pop("full_name", "Citizen Tester"),
+            "first_name": overrides.pop("first_name", "Citizen"),
+            "last_name": overrides.pop("last_name", "Tester"),
             "phone": overrides.pop("phone", "11999999999"),
             "password": password,
+            "city_id": city_id,
         }
         payload.update(overrides)
         response = api_client.post(reverse("citizen-register"), payload, format="json", **security_headers)
@@ -87,7 +81,7 @@ def citizen_tokens(api_client, security_headers, create_citizen_user):
             **security_headers,
         )
         assert login_response.status_code == 200, login_response.content
-        tokens = login_response.json()
+        tokens = login_response.json()["data"]
         return {
             "access": tokens["access"],
             "refresh": tokens["refresh"],
@@ -102,6 +96,7 @@ def citizen_tokens(api_client, security_headers, create_citizen_user):
 def create_admin_user(api_client, security_headers):
     def _create(**overrides):
         password = overrides.pop("password", "AdmSenha123!")
+        ensure_location("Admin API City")
         payload = {
             "email": overrides.pop("email", f"admin_{uuid4().hex}@example.com"),
             "first_name": overrides.pop("first_name", "Admin"),
@@ -127,7 +122,7 @@ def admin_tokens(api_client, security_headers, create_admin_user):
             **security_headers,
         )
         assert login_response.status_code == 200, login_response.content
-        tokens = login_response.json()
+        tokens = login_response.json()["data"]
         return {
             "access": tokens["access"],
             "refresh": tokens["refresh"],

@@ -102,7 +102,7 @@ def test_category_update_as_admin(api_client, admin_tokens, auth_header):
     )
 
     assert response.status_code == 200
-    assert response.json()["name"] == "Arvores Rev"
+    assert response.json()["data"]["name"] == "Arvores Rev"
 
 
 @pytest.mark.django_db

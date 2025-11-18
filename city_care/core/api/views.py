@@ -8,6 +8,7 @@ from rest_framework.response import Response
 
 from accounts.models import Citizen, City, Employee, Organization, State
 from accounts.serializers import CitySerializer, OrganizationSerializer, StateSerializer
+from core.api.responses import ApiResponseMixin
 from core.api.serializers import (
     CategorySerializer,
     CategoryCreateSerializer,
@@ -15,6 +16,8 @@ from core.api.serializers import (
     ReportCreateSerializer,
     ReportDetailSerializer,
     ReportListSerializer,
+    ReportCommentCreateSerializer,
+    ReportCommentSerializer,
     TagSerializer,
 )
 from core.repositories import report_repository
@@ -23,19 +26,48 @@ from core.api.authentication import CitizenJWTAuthentication, EmployeeJWTAuthent
 from core.api.permissions import InternalAPIPermission
 
 
+class BaseApiViewSet(ApiResponseMixin, viewsets.GenericViewSet):
+    response_namespace = ""
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        return self.wrap_drf_response(response, "list")
+
+    def retrieve(self, request, *args, **kwargs):
+        response = super().retrieve(request, *args, **kwargs)
+        return self.wrap_drf_response(response, "detail")
+
+    def create(self, request, *args, **kwargs):
+        response = super().create(request, *args, **kwargs)
+        return self.wrap_drf_response(response, "create")
+
+    def update(self, request, *args, **kwargs):
+        response = super().update(request, *args, **kwargs)
+        return self.wrap_drf_response(response, "update")
+
+    def partial_update(self, request, *args, **kwargs):
+        response = super().partial_update(request, *args, **kwargs)
+        return self.wrap_drf_response(response, "update")
+
+    def destroy(self, request, *args, **kwargs):
+        response = super().destroy(request, *args, **kwargs)
+        return self.wrap_drf_response(response, "delete")
+
+
 class StateViewSet(
+    BaseApiViewSet,
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
     mixins.DestroyModelMixin,
-    viewsets.GenericViewSet,
 ):
     queryset = State.objects.all()
     serializer_class = StateSerializer
     permission_classes = [AllowAny]
     authentication_classes = (EmployeeJWTAuthentication, CitizenJWTAuthentication, SessionAuthentication)
     pagination_class = None
+    response_namespace = "states"
 
     def get_permissions(self):
         if self.action in {"list", "retrieve"}:
@@ -44,18 +76,19 @@ class StateViewSet(
 
 
 class CityViewSet(
+    BaseApiViewSet,
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
     mixins.DestroyModelMixin,
-    viewsets.GenericViewSet,
 ):
     queryset = City.objects.select_related("state").all()
     serializer_class = CitySerializer
     permission_classes = [AllowAny]
     authentication_classes = (EmployeeJWTAuthentication, CitizenJWTAuthentication, SessionAuthentication)
     pagination_class = None
+    response_namespace = "cities"
 
     def get_permissions(self):
         if self.action in {"list", "retrieve"}:
@@ -71,18 +104,19 @@ class CityViewSet(
 
 
 class OrganizationViewSet(
+    BaseApiViewSet,
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
     mixins.DestroyModelMixin,
-    viewsets.GenericViewSet,
 ):
     queryset = Organization.objects.select_related("city", "city__state").all()
     serializer_class = OrganizationSerializer
     permission_classes = [InternalAPIPermission]
     authentication_classes: tuple = ()
     pagination_class = None
+    response_namespace = "organizations"
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -96,18 +130,19 @@ class OrganizationViewSet(
 
 
 class CategoryViewSet(
+    BaseApiViewSet,
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
     mixins.DestroyModelMixin,
-    viewsets.GenericViewSet,
 ):
     queryset = Category.objects.select_related("department").all()
     serializer_class = CategorySerializer
     permission_classes = [IsAuthenticated]
     authentication_classes = (EmployeeJWTAuthentication, CitizenJWTAuthentication, SessionAuthentication)
     pagination_class = None
+    response_namespace = "categories"
 
     def get_permissions(self):
         if self.action in {"create", "update", "partial_update", "destroy"}:
@@ -127,31 +162,37 @@ class CategoryViewSet(
         page = self.paginate_queryset(qs)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+            paginated = self.get_paginated_response(serializer.data)
+            return self.wrap_drf_response(paginated, "list")
         serializer = self.get_serializer(qs, many=True)
-        return Response(serializer.data)
+        return self.success(data=serializer.data, code=self.build_code("list"))
+
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         category = serializer.save()
         output = CategorySerializer(category, context=self.get_serializer_context())
-        headers = self.get_success_headers(output.data)
-        return Response(output.data, status=status.HTTP_201_CREATED, headers=headers)
+        return self.success(
+            data=output.data,
+            code=self.build_code("create"),
+            status_code=status.HTTP_201_CREATED,
+        )
 
 
 class TagViewSet(
+    BaseApiViewSet,
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
     mixins.DestroyModelMixin,
-    viewsets.GenericViewSet,
 ):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     permission_classes = [IsAuthenticated]
     authentication_classes = (EmployeeJWTAuthentication, CitizenJWTAuthentication, SessionAuthentication)
     pagination_class = None
+    response_namespace = "tags"
 
     def get_permissions(self):
         if self.action in {"create", "update", "partial_update", "destroy"}:
@@ -163,23 +204,27 @@ class TagViewSet(
         serializer.is_valid(raise_exception=True)
         tag = serializer.save()
         output = TagSerializer(tag, context=self.get_serializer_context())
-        headers = self.get_success_headers(output.data)
-        return Response(output.data, status=status.HTTP_201_CREATED, headers=headers)
+        return self.success(
+            data=output.data,
+            code=self.build_code("create"),
+            status_code=status.HTTP_201_CREATED,
+        )
 
 
 class DepartmentViewSet(
+    BaseApiViewSet,
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
     mixins.DestroyModelMixin,
-    viewsets.GenericViewSet,
 ):
     queryset = Department.objects.all()
     serializer_class = DepartmentSerializer
     permission_classes = [IsAuthenticated]
     authentication_classes = (EmployeeJWTAuthentication, CitizenJWTAuthentication, SessionAuthentication)
     pagination_class = None
+    response_namespace = "departments"
 
     def get_permissions(self):
         if self.action in {"create", "update", "partial_update", "destroy"}:
@@ -191,20 +236,25 @@ class DepartmentViewSet(
         serializer.is_valid(raise_exception=True)
         department = serializer.save()
         output = DepartmentSerializer(department, context=self.get_serializer_context())
-        headers = self.get_success_headers(output.data)
-        return Response(output.data, status=status.HTTP_201_CREATED, headers=headers)
+        return self.success(
+            data=output.data,
+            code=self.build_code("create"),
+            status_code=status.HTTP_201_CREATED,
+        )
 
 
 class ReportViewSet(
+    BaseApiViewSet,
     mixins.ListModelMixin,
     mixins.CreateModelMixin,
     mixins.RetrieveModelMixin,
-    viewsets.GenericViewSet,
 ):
     permission_classes = [IsAuthenticated]
+    authentication_classes = (EmployeeJWTAuthentication, CitizenJWTAuthentication, SessionAuthentication)
     filter_backends = [filters.OrderingFilter]
     ordering_fields = ["created_at", "priority"]
     ordering = ["-created_at"]
+    response_namespace = "reports"
 
     def get_queryset(self):
         user = self.request.user
@@ -262,38 +312,76 @@ class ReportViewSet(
         serializer.is_valid(raise_exception=True)
         report = serializer.save()
         output = ReportDetailSerializer(report, context=self.get_serializer_context())
-        headers = self.get_success_headers(output.data)
-        return Response(output.data, status=status.HTTP_201_CREATED, headers=headers)
-
-    # Comments feature removed
+        return self.success(
+            data=output.data,
+            code=self.build_code("create"),
+            status_code=status.HTTP_201_CREATED,
+        )
 
     @action(detail=False, methods=["get"], url_path="eligibles-ignore", permission_classes=[InternalAPIPermission])
     def eligible_for_ignore(self, request, *args, **kwargs):
         try:
             hours = int(request.query_params.get("hours", 168))
         except (TypeError, ValueError):
-            return Response({"detail": "Parâmetro de horas inválido."}, status=status.HTTP_400_BAD_REQUEST)
+            return self.error(
+                errors={"detail": "Parametro de horas invalido."},
+                code=self.build_code("eligible.invalid_hours"),
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
         data = report_repository.get_reports_eligible_for_ignore(hours)
-        return Response({"results": data})
+        return self.success(
+            data={"results": data},
+            code=self.build_code("eligible.list"),
+        )
 
     @action(detail=False, methods=["get"], url_path="avg-resolution", permission_classes=[IsAdminUser])
     def average_resolution(self, request, *args, **kwargs):
         data = report_repository.get_average_resolution_time_by_category()
-        return Response({"results": data})
+        return self.success(
+            data={"results": data},
+            code=self.build_code("avg_resolution"),
+        )
+
+    @action(detail=True, methods=["post"], url_path="comment", permission_classes=[IsAuthenticated])
+    def add_comment(self, request, *args, **kwargs):
+        report = self.get_object()
+        serializer = ReportCommentCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        message = serializer.validated_data["message"]
+        user = request.user
+        citizen = user if isinstance(user, Citizen) else None
+        employee = user if isinstance(user, Employee) else None
+        if citizen and report.citizen_id != citizen.id:
+            return self.error(
+                errors={"detail": "Ocorrencia nao encontrada."},
+                code=self.build_code("comments.not_found"),
+                status_code=status.HTTP_404_NOT_FOUND,
+            )
+        comment = report.comments.create(message=message, citizen=citizen, employee=employee)
+        data = ReportCommentSerializer(comment).data
+        return self.success(
+            data=data,
+            code=self.build_code("comments.create"),
+            status_code=status.HTTP_201_CREATED,
+        )
 
 
-class DashboardViewSet(viewsets.ViewSet):
+class DashboardViewSet(ApiResponseMixin, viewsets.ViewSet):
     permission_classes = [IsAdminUser]
     authentication_classes = (EmployeeJWTAuthentication, SessionAuthentication)
+    response_namespace = "dashboard"
 
     def list(self, request, *args, **kwargs):
         open_by_neighborhood = report_repository.get_open_reports_grouped_by_neighborhood()
         weekly_series = report_repository.get_weekly_series_by_status()
-        return Response(
-            {
-                "open_by_neighborhood": open_by_neighborhood,
-                "weekly_series": weekly_series,
-            }
+        return self.success(
+            data={
+                "results": {
+                    "open_by_neighborhood": open_by_neighborhood,
+                    "weekly_series": weekly_series,
+                }
+            },
+            code="dashboard.summary",
         )
 
     @action(detail=False, methods=["post"], url_path="export")
@@ -324,9 +412,10 @@ class DashboardViewSet(viewsets.ViewSet):
                     else:
                         end_date = parsed
                 except ValueError:
-                    return Response(
-                        {"detail": f"Formato inválido para {label}. Use YYYY-MM-DD."},
-                        status=status.HTTP_400_BAD_REQUEST,
+                    return self.error(
+                        errors={"detail": f"Formato invalido para {label}. Use YYYY-MM-DD."},
+                        code="dashboard.export.invalid_date",
+                        status_code=status.HTTP_400_BAD_REQUEST,
                     )
 
         open_by_neighborhood = report_repository.get_open_reports_grouped_by_neighborhood()
@@ -338,11 +427,10 @@ class DashboardViewSet(viewsets.ViewSet):
         }
 
         if export_format == "json":
-            # DRF Response already serializes as JSON;
-            # Content-Disposition hints browser to download.
-            response = Response(payload)
-            response["Content-Disposition"] = 'attachment; filename="dashboard_report.json"'
-            return response
+            return self.success(
+                data={"results": payload},
+                code="dashboard.export",
+            )
 
         if export_format == "csv":
             response = HttpResponse(content_type="text/csv")
@@ -364,14 +452,14 @@ class DashboardViewSet(viewsets.ViewSet):
 
             return response
 
-        return Response(
-            {"detail": "Formato inválido. Use 'json' ou 'csv'."},
-            status=status.HTTP_400_BAD_REQUEST,
+        return self.error(
+            errors={"detail": "Formato invalido. Use 'json' ou 'csv'."},
+            code="dashboard.export.invalid_format",
+            status_code=status.HTTP_400_BAD_REQUEST,
         )
-
-
-class SystemOpsViewSet(viewsets.ViewSet):
+class SystemOpsViewSet(ApiResponseMixin, viewsets.ViewSet):
     permission_classes = [InternalAPIPermission]
+    response_namespace = "system"
 
     @action(detail=False, methods=["post"], url_path="backup/full")
     def backup_full(self, request, *args, **kwargs):
@@ -381,11 +469,15 @@ class SystemOpsViewSet(viewsets.ViewSet):
         buf = StringIO()
         try:
             call_command("backup_full", stdout=buf)
-            return Response({"detail": "Backup completo disparado com sucesso.", "output": buf.getvalue()})
+            return self.success(
+                data={"detail": "Backup completo disparado com sucesso.", "output": buf.getvalue()},
+                code="system.backup_full",
+            )
         except Exception as exc:
-            return Response(
-                {"detail": f"Falha ao executar backup completo: {exc}", "output": buf.getvalue()},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            return self.error(
+                errors={"detail": f"Falha ao executar backup completo: {exc}", "output": buf.getvalue()},
+                code="system.backup_full.error",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
     @action(detail=False, methods=["post"], url_path="backup/diff")
@@ -396,9 +488,13 @@ class SystemOpsViewSet(viewsets.ViewSet):
         buf = StringIO()
         try:
             call_command("backup_diff", stdout=buf)
-            return Response({"detail": "Backup diferencial disparado com sucesso.", "output": buf.getvalue()})
+            return self.success(
+                data={"detail": "Backup diferencial disparado com sucesso.", "output": buf.getvalue()},
+                code="system.backup_diff",
+            )
         except Exception as exc:
-            return Response(
-                {"detail": f"Falha ao executar backup diferencial: {exc}", "output": buf.getvalue()},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            return self.error(
+                errors={"detail": f"Falha ao executar backup diferencial: {exc}", "output": buf.getvalue()},
+                code="system.backup_diff.error",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

@@ -90,7 +90,7 @@ def test_department_update_as_admin(api_client, admin_tokens, auth_header):
     )
 
     assert response.status_code == 200
-    assert response.json()["phone"] == "11911112222"
+    assert response.json()["data"]["phone"] == "11911112222"
 
 
 @pytest.mark.django_db

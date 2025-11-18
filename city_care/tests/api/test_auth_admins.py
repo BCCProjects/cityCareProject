@@ -3,8 +3,11 @@ from __future__ import annotations
 import pytest
 from django.urls import reverse
 
+from tests.utils import ensure_location
+
 
 def _admin_payload(email: str, password: str = "AdmSenha123!") -> dict[str, str]:
+    ensure_location("Admin Auth City")
     return {
         "email": email,
         "first_name": "Admin",
@@ -20,7 +23,8 @@ def test_admin_register_success(api_client, security_headers):
     response = api_client.post(reverse("admin-register"), payload, format="json", **security_headers)
 
     assert response.status_code == 201
-    data = response.json()
+    body = response.json()
+    data = body["data"]
     assert data["email"] == payload["email"]
     assert data["first_name"] == payload["first_name"]
     assert "id" in data
@@ -82,7 +86,7 @@ def test_admin_login_success(api_client, security_headers, create_admin_user):
     )
 
     assert response.status_code == 200
-    body = response.json()
+    body = response.json()["data"]
     assert "access" in body and "refresh" in body
 
 

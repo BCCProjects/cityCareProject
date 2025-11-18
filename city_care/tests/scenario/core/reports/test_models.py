@@ -9,33 +9,37 @@ from django.utils import timezone
 
 from accounts.models import Citizen
 from core.reports.models import Category, Department, Report, ReportPriority, ReportStatus, Tag
+from tests.utils import ensure_location
 
 
 class ReportModelValidationTests(TestCase):
     def setUp(self):
+        _, self.city, self.organization = ensure_location("Report Model City")
         self.department = Department.objects.create(
-            name="Serviços Urbanos",
+            name="Servicos Urbanos",
             email="servicos@citycare.gov",
             phone="11999999999",
         )
         self.other_department = Department.objects.create(
-            name="Iluminação",
+            name="Iluminacao",
             email="luz@citycare.gov",
             phone="11888888888",
         )
         self.category = Category.objects.create(
             department=self.department,
-            name="Árvore caída",
+            name="Arvore caida",
             slug="arvore",
-            description="Tratativa de árvores",
+            description="Tratativa de arvores",
         )
         self.tag = Tag.objects.create(name="Galho", slug="galho")
         self.citizen = Citizen.objects.create(
             email="model-tests@example.com",
-            full_name="Maria Silva",
+            first_name="Maria",
+            last_name="Silva",
             phone="11911111111",
             password="pbkdf2_sha256$260000$dummy$ZVd5Q3g=",
             is_active=True,
+            city=self.city,
         )
         self.citizen.set_password("SenhaModel123")
         self.citizen.save()
@@ -45,8 +49,10 @@ class ReportModelValidationTests(TestCase):
             "citizen": self.citizen,
             "category": self.category,
             "department": self.department,
+            "city": self.city,
+            "organization": self.organization,
             "title": "Fiscalizar poda inadequada",
-            "description": "Galhos bloqueando a calçada",
+            "description": "Galhos bloqueando a calcada",
             "priority": ReportPriority.MEDIUM,
             "address": "Rua das Flores, 10",
             "neighborhood": "Jardim",
@@ -72,8 +78,8 @@ class ReportModelValidationTests(TestCase):
     def test_report_allows_denied_reason_when_provided(self):
         report = self._build_report(
             status=ReportStatus.INDEFERIDO,
-            denied_reason="Documentação incompleta",
+            denied_reason="Documentacao incompleta",
         )
         report.full_clean()
         report.save()
-        self.assertEqual(report.denied_reason, "Documentação incompleta")
+        self.assertEqual(report.denied_reason, "Documentacao incompleta")

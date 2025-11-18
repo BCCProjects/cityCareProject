@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from datetime import timedelta
 from pathlib import Path
@@ -25,9 +26,36 @@ def load_dotenv(path: Path) -> None:
 load_dotenv(BASE_DIR / ".env")
 
 
-def env_list(name: str, default: str = "") -> list[str]:
-    value = os.getenv(name, default)
-    return [item.strip() for item in value.split(",") if item.strip()]
+def env_list(name: str, default: str | list[str] = "") -> list[str]:
+    """
+    Read comma separated or JSON-like env vars, accepting defaults as lists.
+    """
+    value = os.getenv(name)
+    if value is None:
+        value = default
+
+    if isinstance(value, (list, tuple)):
+        items = list(value)
+    else:
+        text = str(value or "").strip()
+        if not text:
+            return []
+        if text.startswith("[") and text.endswith("]"):
+            parsed: list[str] | None = None
+            try:
+                maybe = json.loads(text)
+                if isinstance(maybe, list):
+                    parsed = maybe
+            except json.JSONDecodeError:
+                parsed = None
+            if parsed is not None:
+                items = parsed
+            else:
+                text = text[1:-1]
+                items = text.split(",")
+        else:
+            items = text.split(",")
+    return [str(item).strip() for item in items if str(item).strip()]
 
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "unsafe-secret-key")
@@ -158,6 +186,7 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
+    "EXCEPTION_HANDLER": "core.api.responses.custom_exception_handler",
 }
 
 CORS_DEFAULT_ORIGIN = ["http://localhost:3000", "http://localhost:8081", "exp://192.168.1.14:8081"] if DEBUG else ""

@@ -4,30 +4,37 @@ import io
 from pathlib import Path
 
 import pytest
+from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
 
 from accounts.models import Administrator, Citizen
-from core.reports.models import Category, Department, Report, ReportPriority, ReportStatus, StatusHistory, Tag
+from core.reports.models import Category, Department, ReportPriority, ReportStatus, StatusHistory, Tag
 from core.services.report_service import ReportService
+from tests.utils import ensure_location, force_resolved_city
 
 
 @pytest.fixture
 def base_entities(db):
+    _, city, organization = ensure_location("Report Service City")
     admin = Administrator.objects.create_superuser(
         email="admin@example.com",
         password="Senha123",
         first_name="Admin",
+        organization=organization,
     )
     citizen = Citizen.objects.create(
         email="citizen@example.com",
-        full_name="Fulano de Tal",
+        first_name="Fulano",
+        last_name="de Tal",
         phone="11999999999",
-        password="pbkdf2_sha256$260000$dummy$hash",
+        password=make_password("Senha123"),
         is_active=True,
+        city=city,
     )
     department = Department.objects.create(name="Infraestrutura", email="infra@citycare.gov", phone="11988887777")
-    category = Category.objects.create(department=department, name="Iluminação pública", slug="iluminacao")
+    category = Category.objects.create(department=department, name="Iluminacao publica", slug="iluminacao")
+    force_resolved_city(city)
     return admin, citizen, department, category
 
 
@@ -53,8 +60,8 @@ def test_create_report_with_history_tags_and_attachments(base_entities, tags, tm
         citizen=citizen,
         category=category,
         department=department,
-        title="Lâmpada queimada em avenida",
-        description="Rua escura à noite",
+        title="Lampada queimada em avenida",
+        description="Rua escura a noite",
         priority="ALTA",
         address="Rua A",
         neighborhood="Centro",
@@ -77,10 +84,10 @@ def test_create_report_with_history_tags_and_attachments(base_entities, tags, tm
     history = StatusHistory.objects.filter(report=report)
     assert history.count() == 1
     entry = history.first()
-    assert entry.old_status is None
+    assert entry.previous_status == ReportStatus.ABERTO
     assert entry.new_status == ReportStatus.ABERTO
-    assert entry.administrator == admin
-    assert entry.reason == "Criação do relatório"
+    assert entry.changed_by == admin
+    assert entry.notes == "Atribuicao inicial"
 
 
 def test_create_report_uses_default_priority(base_entities, tags):
@@ -91,7 +98,7 @@ def test_create_report_uses_default_priority(base_entities, tags):
         category=category,
         department=department,
         title="Buraco na rua",
-        description="Descrição simples",
+        description="Descricao simples",
         priority="",
         address="Rua B",
         neighborhood="Centro",

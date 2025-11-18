@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import timedelta
-
 from decimal import Decimal
 
 from django.conf import settings
@@ -14,10 +13,12 @@ from accounts.models import Administrator, Citizen
 from core.repositories import report_repository
 from core.reports.models import Attachment, Category, Department, Report, ReportPriority, ReportStatus, Tag
 from core.services.report_service import InvalidStatusTransition, ReportService
+from tests.utils import ensure_location, force_resolved_city
 
 
 class ReportServiceTests(TestCase):
     def setUp(self):
+        _, self.city, self.organization = ensure_location("Scenario Service City")
         self.department = Department.objects.create(name="Obras", email="obras@citycare.gov", phone="1199999999")
         self.category = Category.objects.create(
             department=self.department,
@@ -29,10 +30,12 @@ class ReportServiceTests(TestCase):
         self.tag_urgent = Tag.objects.create(name="Urgente", slug="urgente")
         self.citizen = Citizen.objects.create(
             email="citizen@example.com",
-            full_name="Fulano",
+            first_name="Fulano",
+            last_name="Silva",
             phone="11988887777",
             password="pbkdf2_sha256$260000$dummy$ZVd5Q3g=",
             is_active=True,
+            city=self.city,
         )
         self.citizen.set_password("SenhaSegura123")
         self.citizen.save()
@@ -40,8 +43,10 @@ class ReportServiceTests(TestCase):
             email="admin@citycare.gov",
             password="SenhaSegura123",
             first_name="Admin",
+            organization=self.organization,
         )
         Attachment._meta.get_field("file").storage = FileSystemStorage(location=settings.MEDIA_ROOT)
+        force_resolved_city(self.city)
 
     def test_full_status_flow(self):
         file_data = SimpleUploadedFile("foto.jpg", b"fake-image", content_type="image/jpeg")
@@ -49,8 +54,8 @@ class ReportServiceTests(TestCase):
             citizen=self.citizen,
             category=self.category,
             department=self.department,
-            title="Buraco perigoso próximo à escola",
-            description="Há um buraco profundo próximo à escola municipal.",
+            title="Buraco perigoso proximo a escola",
+            description="Ha um buraco profundo proximo a escola municipal.",
             priority="ALTA",
             address="Rua A, 123",
             neighborhood="Centro",
@@ -77,8 +82,8 @@ class ReportServiceTests(TestCase):
             citizen=self.citizen,
             category=self.category,
             department=self.department,
-            title="Solicitação de poda",
-            description="Poda necessária.",
+            title="Solicitacao de poda",
+            description="Poda necessaria.",
             priority="MEDIA",
             address="Rua B, 456",
             neighborhood="Centro",
@@ -97,9 +102,11 @@ class ReportServiceTests(TestCase):
             citizen=self.citizen,
             category=self.category,
             department=self.department,
+            city=self.city,
+            organization=self.organization,
             title="Buraco sem resposta",
             description="Sem retorno",
-            priority="BAIXA",
+            priority="BAIXO",
             address="Rua C, 789",
             neighborhood="Bairro",
             latitude=-23.2,
@@ -119,7 +126,7 @@ class ReportServiceTests(TestCase):
             category=self.category,
             department=self.department,
             title="Fios soltos",
-            description="Fios caídos na rua",
+            description="Fios caidos na rua",
             priority="MEDIA",
             address="Rua D, 321",
             neighborhood="Vila",
@@ -134,7 +141,7 @@ class ReportServiceTests(TestCase):
 
     def test_normalize_priority_accepts_variants(self):
         self.assertEqual(ReportService.normalize_priority("alta"), ReportPriority.HIGH)
-        self.assertEqual(ReportService.normalize_priority("Média"), ReportPriority.MEDIUM)
+        self.assertEqual(ReportService.normalize_priority("media"), ReportPriority.MEDIUM)
         self.assertEqual(ReportService.normalize_priority("baixas"), ReportPriority.LOW)
         self.assertIsNone(ReportService.normalize_priority(None))
 
@@ -160,7 +167,3 @@ class ReportServiceTests(TestCase):
                 ReportStatus.CONCLUIDO,
                 administrator=self.admin,
             )
-
-
-
-

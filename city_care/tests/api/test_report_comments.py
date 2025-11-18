@@ -39,6 +39,7 @@ def test_add_comment_success(api_client, citizen_tokens, auth_header):
         format="json",
         **auth_header(token_info["access"]),
     )
+    assert create_response.status_code == 201, create_response.json()
     report_id = create_response.json()["data"]["id"]
 
     response = api_client.post(
@@ -66,6 +67,7 @@ def test_add_comment_missing_message(api_client, citizen_tokens, auth_header):
         format="json",
         **auth_header(token_info["access"]),
     )
+    assert create_response.status_code == 201, create_response.json()
     report_id = create_response.json()["data"]["id"]
 
     response = api_client.post(
@@ -92,6 +94,7 @@ def test_add_comment_by_other_citizen_returns_not_found(api_client, citizen_toke
         format="json",
         **auth_header(owner_token["access"]),
     )
+    assert create_response.status_code == 201, create_response.json()
     report_id = create_response.json()["data"]["id"]
 
     response = api_client.post(

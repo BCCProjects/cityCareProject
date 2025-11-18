@@ -7,17 +7,13 @@ from django.utils import timezone
 
 from accounts.models import Citizen
 from core.repositories import report_repository
-from core.reports.models import (
-    Category,
-    Department,
-    Report,
-    ReportPriority,
-    ReportStatus,
-)
+from core.reports.models import Category, Department, Report, ReportPriority, ReportStatus
+from tests.utils import ensure_location
 
 
 class ReportRepositoryTests(TestCase):
     def setUp(self):
+        _, self.city, self.organization = ensure_location("Repository Scenario City")
         self.department = Department.objects.create(
             name="Infraestrutura",
             email="infra@citycare.gov",
@@ -25,22 +21,24 @@ class ReportRepositoryTests(TestCase):
         )
         self.category_pavement = Category.objects.create(
             department=self.department,
-            name="Pavimentação",
+            name="Pavimentacao",
             slug="pavimentacao",
             description="Buracos e afundamentos",
         )
         self.category_trees = Category.objects.create(
             department=self.department,
-            name="Arborização",
+            name="Arborizacao",
             slug="arborizacao",
-            description="Poda e quedas de árvores",
+            description="Poda e quedas de arvores",
         )
         self.citizen = Citizen.objects.create(
             email="repository-tests@example.com",
-            full_name="João Souza",
+            first_name="Joao",
+            last_name="Souza",
             phone="11922222222",
             password="pbkdf2_sha256$260000$dummy$ZVd5Q3g=",
             is_active=True,
+            city=self.city,
         )
         self.citizen.set_password("RepositoryTest123")
         self.citizen.save()
@@ -63,8 +61,10 @@ class ReportRepositoryTests(TestCase):
             citizen=self.citizen,
             category=category,
             department=self.department,
+            city=self.city,
+            organization=self.organization,
             title=f"Sinalizar {category.name} em {latitude}",
-            description="Ocorrência registrada para testes de repositório",
+            description="Ocorrencia registrada para testes de repositorio",
             priority=priority,
             address="Rua Teste, 42",
             neighborhood=neighborhood,
@@ -130,7 +130,6 @@ class ReportRepositoryTests(TestCase):
         result = report_repository.get_average_resolution_time_by_category()
         categories = {item["category_name"]: round(item["average_hours"], 2) for item in result}
         self.assertEqual(len(categories), 1)
-        # Média de 48h e 24h = 36h
         self.assertAlmostEqual(categories[self.category_pavement.name], 36.0, places=1)
 
     def test_open_reports_grouped_by_neighborhood(self):

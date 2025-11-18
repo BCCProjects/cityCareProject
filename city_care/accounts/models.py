@@ -117,6 +117,15 @@ class Employee(AbstractBaseUser, PermissionsMixin):
         return self.email
 
 
+class Administrator(Employee):
+    objects = AdministratorManager()
+
+    class Meta:
+        proxy = True
+        verbose_name = "Administrator"
+        verbose_name_plural = "Administrators"
+
+
 class Citizen(models.Model):
     email = models.EmailField("Email", unique=True)
     first_name = models.CharField("Nome", max_length=150)

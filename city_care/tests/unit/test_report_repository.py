@@ -1,17 +1,22 @@
 import pytest
+from django.contrib.auth.hashers import make_password
+
 import core.repositories.report_repository as repo
-from core.reports.models import Report, Category, Department
 from accounts.models import Citizen
+from core.reports.models import Category, Department, Report
+from tests.utils import ensure_location
 
 
 def make_citizen():
-    c = Citizen(
+    _, city, _ = ensure_location("Repository City")
+    c = Citizen.objects.create(
         email="test@test.com",
-        full_name="Test User",
+        first_name="Test",
+        last_name="User",
         phone="00000000000",
+        password=make_password("123456"),
+        city=city,
     )
-    c.set_password("123456")
-    c.save()
     return c
 
 
@@ -42,6 +47,8 @@ def test_get_reports_eligible_for_ignore_returns_list():
         citizen=citizen,
         department=dep,
         category=cat,
+        city=citizen.city,
+        organization=citizen.city.organization,
         title="Poste apagado",
         description="Teste",
         address="Rua X",
@@ -66,6 +73,8 @@ def test_get_open_reports_grouped_by_neighborhood():
         citizen=citizen,
         category=cat,
         department=dep,
+        city=citizen.city,
+        organization=citizen.city.organization,
         title="Lixo 1",
         description="OK",
         address="Rua A",
@@ -79,6 +88,8 @@ def test_get_open_reports_grouped_by_neighborhood():
         citizen=citizen,
         category=cat,
         department=dep,
+        city=citizen.city,
+        organization=citizen.city.organization,
         title="Lixo 2",
         description="OK",
         address="Rua A",

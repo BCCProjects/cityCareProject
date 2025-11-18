@@ -7,7 +7,7 @@ from django.db import IntegrityError, transaction
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from .models import City, Citizen, Employee, Organization, State
+from .models import Administrator, City, Citizen, Employee, Organization, State
 from core.api.tokens import CitizenRefreshToken, EmployeeRefreshToken
 
 
@@ -227,6 +227,60 @@ class EmployeeTokenSerializer(serializers.Serializer):
             raise serializers.ValidationError({"detail": "Credenciais invalidas."})
 
         refresh = EmployeeRefreshToken.for_employee(employee)
+        attrs["refresh"] = str(refresh)
+        attrs["access"] = str(refresh.access_token)
+        return attrs
+
+
+class AdministratorRegistrationSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, min_length=8)
+
+    class Meta:
+        model = Administrator
+        fields = ("id", "email", "first_name", "last_name", "password")
+        read_only_fields = ("id",)
+
+    def _default_organization(self) -> Organization:
+        organization = Organization.objects.select_related("city").order_by("id").first()
+        if not organization:
+            raise serializers.ValidationError({"organization": "Nenhuma organizacao configurada."})
+        return organization
+
+    def create(self, validated_data):
+        password = validated_data.pop("password")
+        organization = self._default_organization()
+        admin = Administrator.objects.create_superuser(
+            password=password,
+            organization=organization,
+            **validated_data,
+        )
+        admin.refresh_from_db()
+        return admin
+
+
+class AdministratorTokenSerializer(serializers.Serializer):
+    email = serializers.CharField()
+    password = serializers.CharField(write_only=True, min_length=8)
+    refresh = serializers.CharField(read_only=True)
+    access = serializers.CharField(read_only=True)
+
+    def validate(self, attrs):
+        import re
+
+        email = (attrs.get("email") or "").strip()
+        pattern = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+        if not pattern.match(email):
+            raise serializers.ValidationError({"email": "Insira um endereco de email valido."})
+        password = attrs["password"]
+        try:
+            admin = Administrator.objects.get(email=email, is_active=True, is_superuser=True)
+        except Administrator.DoesNotExist as exc:
+            raise serializers.ValidationError({"detail": "Credenciais invalidas."}) from exc
+
+        if not admin.check_password(password):
+            raise serializers.ValidationError({"detail": "Credenciais invalidas."})
+
+        refresh = EmployeeRefreshToken.for_employee(admin)
         attrs["refresh"] = str(refresh)
         attrs["access"] = str(refresh.access_token)
         return attrs

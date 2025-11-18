@@ -3,13 +3,18 @@ from __future__ import annotations
 import pytest
 from django.urls import reverse
 
+from tests.utils import ensure_location
+
 
 def _citizen_payload(email: str, password: str = "Senha123!") -> dict[str, str]:
+    _, city, _ = ensure_location("Citizen Auth City")
     return {
         "email": email,
-        "full_name": "Citizen Example",
+        "first_name": "Citizen",
+        "last_name": "Example",
         "phone": "11999999999",
         "password": password,
+        "city_id": city.id,
     }
 
 
@@ -20,9 +25,11 @@ def test_citizen_register_success(api_client, security_headers):
     response = api_client.post(reverse("citizen-register"), payload, format="json", **security_headers)
 
     assert response.status_code == 201
-    data = response.json()
+    body = response.json()
+    data = body["data"]
     assert data["email"] == payload["email"]
-    assert data["full_name"] == payload["full_name"]
+    assert data["first_name"] == payload["first_name"]
+    assert data["city"]["id"] == payload["city_id"]
     assert "id" in data
 
 
@@ -57,7 +64,7 @@ def test_citizen_register_missing_headers(api_client):
     assert response.status_code == 400
     body = response.json()
     assert "detail" in body["errors"]
-    assert "Cabeçalhos obrigatórios" in body["errors"]["detail"]
+    assert "Cabecalhos obrigatorios" in body["errors"]["detail"]
 
 
 @pytest.mark.django_db
@@ -98,7 +105,7 @@ def test_citizen_login_success(api_client, security_headers, create_citizen_user
     )
 
     assert response.status_code == 200
-    body = response.json()
+    body = response.json()["data"]
     assert "access" in body
     assert "refresh" in body
 

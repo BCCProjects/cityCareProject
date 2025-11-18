@@ -10,6 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 from accounts.models import Administrator, Citizen
 from core.reports.models import Category, Department, Report, ReportPriority
+from tests.utils import ensure_location
 
 
 _ALIAS_EMAILS: dict[str, str] = {}
@@ -44,12 +45,19 @@ urlpatterns = [
 
 @pytest.fixture(name="django_user_model")
 def django_user_model_override():
+    _, _, organization = ensure_location("Login Org City")
+
     class Adapter:
         class objects:
             @staticmethod
             def create_user(username, password):
                 email = f"{username}@example.com"
-                user = Administrator.objects.create_user(email=email, password=password, first_name=username.title())
+                user = Administrator.objects.create_user(
+                    email=email,
+                    password=password,
+                    first_name=username.title(),
+                    organization=organization,
+                )
                 _ALIAS_EMAILS[username] = email
                 return user
 
@@ -82,21 +90,26 @@ def test_login_flow(client, django_user_model):
 
 @pytest.mark.django_db
 def test_report_creation_scenario():
+    _, city, organization = ensure_location("Scenario City")
     department = Department.objects.create(name="Obras", email="obras@city.gov", phone="11988887777")
     category = Category.objects.create(department=department, name="Buraco", slug="buraco")
     citizen = Citizen.objects.create(
         email="citizen@example.com",
-        full_name="Cidadão Teste",
+        first_name="Cidadao",
+        last_name="Teste",
         phone="11999999999",
         password=make_password("Senha123"),
+        city=city,
     )
 
     report = Report.objects.create(
         citizen=citizen,
         category=category,
         department=department,
-        title="Buraco em frente à escola",
-        description="Há um buraco grande na rua.",
+        city=city,
+        organization=organization,
+        title="Buraco em frente a escola",
+        description="Ha um buraco grande na rua.",
         address="Rua A, 123",
         neighborhood="Centro",
         latitude=Decimal("1.000000"),

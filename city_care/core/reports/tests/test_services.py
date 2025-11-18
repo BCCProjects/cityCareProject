@@ -4,21 +4,24 @@ from datetime import timedelta
 from decimal import Decimal
 from unittest import mock
 
+from django.conf import settings
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
+from django.core.files.storage import FileSystemStorage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.utils import timezone
 
 from accounts.models import City, Citizen, Employee, Organization, State
 from core.repositories import report_repository
-from core.reports.models import Category, Department, Report, ReportPriority, ReportStatus, Tag
+from core.reports.models import Attachment, Category, Department, Report, ReportPriority, ReportStatus, Tag
 from core.services.location_service import CityNotCoveredError
 from core.services.report_service import InvalidStatusTransition, ReportService
 
 
 class ReportServiceTests(TestCase):
     def setUp(self):
+        settings.USE_SUPABASE_ATTACHMENTS = False
         self.state = State.objects.create(name="Sao Paulo", abbreviation="SP")
         self.city = City.objects.create(name="Sao Paulo", state=self.state)
         self.organization = Organization.objects.create(name="Prefeitura Sao Paulo", city=self.city)
@@ -52,6 +55,9 @@ class ReportServiceTests(TestCase):
             organization=self.organization,
         )
         self.employee.groups.add(self.default_group)
+        field = Attachment._meta.get_field("file")
+        self._original_attachment_storage = field.storage
+        field.storage = FileSystemStorage(location=settings.MEDIA_ROOT)
 
         self.city_resolver_patcher = mock.patch(
             "core.services.report_service.resolve_city_from_coordinates",
@@ -59,6 +65,10 @@ class ReportServiceTests(TestCase):
         )
         self.mock_city_resolver = self.city_resolver_patcher.start()
         self.addCleanup(self.city_resolver_patcher.stop)
+        self.addCleanup(self._restore_attachment_storage)
+
+    def _restore_attachment_storage(self):
+        Attachment._meta.get_field("file").storage = self._original_attachment_storage
 
     def test_full_status_flow(self):
         file_data = SimpleUploadedFile("foto.jpg", b"fake-image", content_type="image/jpeg")

@@ -7,7 +7,7 @@ from rest_framework import serializers
 
 from accounts.models import Citizen
 from accounts.serializers import CitySerializer
-from core.reports.models import Attachment, Category, Department, Report, Tag
+from core.reports.models import Attachment, Category, Department, Report, ReportComment, Tag
 from core.services.report_service import ReportService
 
 
@@ -62,6 +62,30 @@ class AttachmentSerializer(serializers.ModelSerializer):
         model = Attachment
         fields = ("id", "file", "description")
         read_only_fields = ("id",)
+
+
+class ReportCommentSerializer(serializers.ModelSerializer):
+    citizen_name = serializers.SerializerMethodField()
+    employee_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ReportComment
+        fields = ("id", "message", "citizen_name", "employee_name", "created_at")
+        read_only_fields = fields
+
+    def get_citizen_name(self, obj):
+        if obj.citizen_id:
+            return obj.citizen.get_full_name()
+        return None
+
+    def get_employee_name(self, obj):
+        if obj.employee_id:
+            return obj.employee.get_full_name() if hasattr(obj.employee, "get_full_name") else obj.employee.email
+        return None
+
+
+class ReportCommentCreateSerializer(serializers.Serializer):
+    message = serializers.CharField(max_length=500)
 
 
 class ReportListSerializer(serializers.ModelSerializer):
@@ -119,7 +143,7 @@ class ReportCreateSerializer(serializers.Serializer):
     category_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), source="category")
     title = serializers.CharField(max_length=200)
     description = serializers.CharField()
-    priority = serializers.ChoiceField(choices=Report._meta.get_field("priority").choices)
+    priority = serializers.CharField(required=False, allow_blank=True, allow_null=True)
     address = serializers.CharField(max_length=255)
     neighborhood = serializers.CharField(max_length=150)
     latitude = serializers.DecimalField(max_digits=9, decimal_places=6)
@@ -148,12 +172,14 @@ class ReportCreateSerializer(serializers.Serializer):
         tags = validated_data.pop("tags", [])
         category = validated_data["category"]
         department = category.department
+        priority = validated_data.pop("priority", None)
         try:
             report = ReportService.create_report(
                 citizen,
                 tags=tags,
                 attachments=attachments,
                 department=department,
+                priority=priority,
                 **validated_data,
             )
         except ValidationError as exc:

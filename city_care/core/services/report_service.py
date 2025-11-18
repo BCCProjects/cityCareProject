@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from pathlib import Path
 from typing import Iterable
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
+from django.core.files.base import ContentFile
 
 from accounts.models import Citizen, Employee
 from core.repositories import report_repository
@@ -37,6 +40,69 @@ class ReportService:
         ReportStatus.CONCLUIDO: set(),
         ReportStatus.IGNORADO: set(),
     }
+    PRIORITY_NORMALIZATION = {
+        ReportPriority.LOW: {"BAIXO", "BAIXA", "BAIXAS", "LOW"},
+        ReportPriority.MEDIUM: {"MEDIO", "MEDIA", "MEDIAS", "MODERADO", "MODERADA"},
+        ReportPriority.HIGH: {"ALTO", "ALTA", "ALTAS", "HIGH"},
+    }
+
+    @staticmethod
+    def _quantize_coordinate(value) -> Decimal:
+        try:
+            decimal_value = Decimal(str(value))
+        except (InvalidOperation, TypeError, ValueError):
+            return Decimal("0.000000")
+        return decimal_value.quantize(Decimal("0.000001"), rounding=ROUND_HALF_UP)
+
+    @staticmethod
+    def _normalize_text(value: str) -> str:
+        import unicodedata
+
+        normalized = unicodedata.normalize("NFKD", value or "")
+        normalized = "".join(ch for ch in normalized if not unicodedata.combining(ch))
+        return normalized.strip().upper()
+
+    @classmethod
+    def normalize_priority(cls, value):
+        if value is None:
+            return None
+        normalized = cls._normalize_text(str(value))
+        for target, aliases in cls.PRIORITY_NORMALIZATION.items():
+            if normalized in aliases:
+                return target
+        return normalized
+
+    @staticmethod
+    def _as_django_file(attachment):
+        description = getattr(attachment, "description", "")
+        source = getattr(attachment, "file", attachment)
+        original_name = getattr(attachment, "name", None)
+
+        if isinstance(source, (str, Path)):
+            path = Path(source)
+            if not path.exists():
+                return None, description
+            data = path.read_bytes()
+            return ContentFile(data, name=path.name), description
+
+        if hasattr(source, "read"):
+            name = getattr(source, "name", None) or original_name or "attachment"
+            if hasattr(source, "seek"):
+                try:
+                    source.seek(0)
+                except OSError:
+                    pass
+            return ContentFile(source.read(), name=name), description
+
+        return None, description
+
+    @staticmethod
+    def _attach_files(report: Report, attachments: Iterable) -> None:
+        for attachment in attachments:
+            file_obj, description = ReportService._as_django_file(attachment)
+            if file_obj is None:
+                continue
+            report.attachments.create(file=file_obj, description=description or "")
 
     @staticmethod
     def create_report(
@@ -55,7 +121,14 @@ class ReportService:
         attachments: Iterable,
     ) -> Report:
         with transaction.atomic():
-            if Report.objects.filter(category=category, latitude=latitude, longitude=longitude).exists():
+            latitude_dec = ReportService._quantize_coordinate(latitude)
+            longitude_dec = ReportService._quantize_coordinate(longitude)
+
+            normalized_priority = ReportService.normalize_priority(priority) or ReportPriority.MEDIUM
+            if normalized_priority not in ReportPriority.values:
+                normalized_priority = ReportPriority.MEDIUM
+
+            if Report.objects.filter(category=category, latitude=latitude_dec, longitude=longitude_dec).exists():
                 raise ValidationError({
                     "non_field_errors": [
                         "Ja existe uma ocorrencia para esta categoria neste mesmo ponto (lat/lng).",
@@ -63,7 +136,7 @@ class ReportService:
                 })
 
             try:
-                resolved_city = resolve_city_from_coordinates(latitude, longitude)
+                resolved_city = resolve_city_from_coordinates(latitude_dec, longitude_dec)
             except CityNotCoveredError as exc:
                 raise ValidationError({"location": str(exc)}) from exc
             except LocationResolutionError as exc:
@@ -76,9 +149,7 @@ class ReportService:
             default_employee = organization.employees.order_by("id").first()
 
             attachments_list = list(attachments or [])
-            effective_priority = priority
-            if not attachments_list:
-                effective_priority = ReportPriority.LOW
+            effective_priority = normalized_priority
 
             report = Report(
                 citizen=citizen,
@@ -92,15 +163,14 @@ class ReportService:
                 priority=effective_priority,
                 address=address,
                 neighborhood=neighborhood,
-                latitude=latitude,
-                longitude=longitude,
+                latitude=latitude_dec,
+                longitude=longitude_dec,
             )
             report.full_clean()
             report.save()
             if tags:
                 report.tags.set(tags)
-            for attachment in attachments_list:
-                report.attachments.create(file=attachment, description=getattr(attachment, "description", ""))
+            ReportService._attach_files(report, attachments_list)
 
             StatusHistory.objects.create(
                 report=report,
@@ -117,12 +187,16 @@ class ReportService:
         report_id: int,
         new_status: str,
         *,
-        employee: Employee,
+        employee: Employee | None = None,
+        administrator: Employee | None = None,
         notes: str = "",
         denied_reason: str | None = None,
     ) -> StatusTransitionResult:
         if new_status not in ReportStatus.values:
             raise InvalidStatusTransition("Status de destino invalido.")
+        actor = administrator or employee
+        if actor is None:
+            raise InvalidStatusTransition("Responsavel pela mudanca nao informado.")
 
         with transaction.atomic():
             report = (
@@ -153,7 +227,7 @@ class ReportService:
                 report=report,
                 previous_status=previous_status,
                 new_status=new_status,
-                changed_by=employee,
+                changed_by=actor,
                 notes=notes,
             )
         return StatusTransitionResult(report=report, history=history)
