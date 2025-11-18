@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { useColorScheme } from "react-native";
 import "react-native-reanimated";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { LoadingState } from "@/components/feedback/LoadingState";
 import { AuthProvider, useAuth } from "@/features/auth/auth-context";
@@ -48,12 +49,14 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <RealtimeBridge />
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-            <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
-            <RootNavigation />
-          </ThemeProvider>
-        </GestureHandlerRootView>
+        <SafeAreaProvider>
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+              <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+              <RootNavigation />
+            </ThemeProvider>
+          </GestureHandlerRootView>
+        </SafeAreaProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

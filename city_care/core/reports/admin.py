@@ -36,7 +36,7 @@ class ReportTagInline(admin.TabularInline):
     extra = 0
 
 
-def export_dashboard_csv(modeladmin, request, queryset):  # noqa: ARG001 - queryset não é usado
+def export_dashboard_csv(modeladmin, request, queryset):
     """
     Admin action to export dashboard-style report as a CSV file.
     """

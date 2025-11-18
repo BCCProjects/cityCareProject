@@ -7,9 +7,9 @@ class ReportsConfig(AppConfig):
     label = "core_reports"
     verbose_name = "Relatórios"
 
-    def ready(self) -> None:  # pragma: no cover
+    def ready(self) -> None:
         try:
-            import core.reports.signals  # noqa: F401
+            import core.reports.signals
         except Exception:
             pass
 
