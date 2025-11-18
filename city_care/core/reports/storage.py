@@ -7,7 +7,6 @@ from storages.backends.s3boto3 import S3Boto3Storage
 
 @deconstructible
 class AttachmentStorage(S3Boto3Storage):
-    # Store within the bucket under this prefix
     location = getattr(settings, "SUPABASE_ATTACHMENT_PREFIX", "reportImages")
     default_acl = "public-read"
     file_overwrite = False

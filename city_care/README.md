@@ -89,6 +89,7 @@ Para recursos em tempo real, defina `CHANNEL_LAYER_BACKEND` (padrão `memory`) e
 | `GET` | `/api/reports/eligibles-ignore` | Consulta relatórios elegíveis (apenas chamadas internas com cabeçalhos X-USER/X-APP/X-SIGNATURE). |
 | `GET` | `/api/reports/avg-resolution/` | Média de resolução por categoria em horas. |
 | `GET` | `/api/dashboard/` | Dados agregados (abertos por bairro/prioridade e série semanal).
+| `POST` | `/api/dashboard/export/` | Exporta relatório de dashboard em JSON ou CSV.
 | `WS` | `/ws/reports/` | WebSocket autenticado que publica `report.created` e `report.status_changed`. |
 
 A coleção Postman (`postman/CityCare.postman_collection.json`) e o environment (`postman/CityCare.postman_environment.json`) já trazem todas as chamadas com variáveis preparadas.

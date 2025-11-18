@@ -5,7 +5,7 @@ WORKDIR /app
 RUN apk add --no-cache bash git
 
 COPY city_app/package.json city_app/package-lock.json ./
-RUN npm ci
+RUN npm i
 
 COPY city_app /app
 

@@ -1,6 +1,8 @@
 from django.contrib import admin
+from django.http import HttpResponse
 
 from .models import Attachment, Category, Department, Report, ReportTag, StatusHistory, Tag
+from core.repositories import report_repository
 
 
 @admin.register(Department)
@@ -33,6 +35,36 @@ class ReportTagInline(admin.TabularInline):
     model = ReportTag
     extra = 0
 
+
+def export_dashboard_csv(modeladmin, request, queryset):
+    """
+    Admin action to export dashboard-style report as a CSV file.
+    """
+    import csv
+
+    open_by_neighborhood = report_repository.get_open_reports_grouped_by_neighborhood()
+    weekly_series = report_repository.get_weekly_series_by_status()
+
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = 'attachment; filename="dashboard_report.csv"'
+
+    writer = csv.writer(response)
+
+    writer.writerow(["Open reports by neighborhood"])
+    writer.writerow(["neighborhood", "priority", "total"])
+    for item in open_by_neighborhood:
+        writer.writerow([item.get("neighborhood") or "", item.get("priority") or "", item.get("total") or 0])
+
+    writer.writerow([])
+    writer.writerow(["Weekly series by status"])
+    writer.writerow(["week", "status", "total"])
+    for item in weekly_series:
+        writer.writerow([item.get("week"), item.get("status") or "", item.get("total") or 0])
+
+    return response
+
+
+export_dashboard_csv.short_description = "Exportar relatório de dashboard (CSV)"
 
  
 
@@ -74,6 +106,7 @@ class ReportAdmin(admin.ModelAdmin):
     inlines = [AttachmentInline, ReportTagInline]
     autocomplete_fields = ("citizen", "category", "department", "city", "organization", "tags", "assigned_to")
     readonly_fields = ("created_at", "updated_at", "last_status_at")
+    actions = [export_dashboard_csv]
 
 
 @admin.register(StatusHistory)
