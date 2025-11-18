@@ -63,9 +63,9 @@ class ReportAdmin(admin.ModelAdmin):
 
 @admin.register(StatusHistory)
 class StatusHistoryAdmin(admin.ModelAdmin):
-    list_display = ("report", "previous_status", "new_status", "changed_by", "created_at")
-    search_fields = ("report__title", "changed_by__email")
-    list_filter = ("new_status",)
+    list_display = ("report", "old_status", "new_status", "administrator", "created_at")
+    search_fields = ("report__title", "administrator__email")
+    list_filter = ("old_status", "new_status", "administrator")
 
 
 @admin.register(Comment)
