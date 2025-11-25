@@ -21,7 +21,7 @@ class Department(models.Model):
     class Meta:
         ordering = ("name",)
 
-    def __str__(self) -> str:  # pragma: no cover
+    def __str__(self) -> str:
         return self.name
 
 
@@ -36,7 +36,7 @@ class Category(models.Model):
     class Meta:
         ordering = ("name",)
 
-    def __str__(self) -> str:  # pragma: no cover
+    def __str__(self) -> str:
         return self.name
 
 
@@ -49,7 +49,7 @@ class Tag(models.Model):
     class Meta:
         ordering = ("name",)
 
-    def __str__(self) -> str:  # pragma: no cover
+    def __str__(self) -> str:
         return self.name
 
 
@@ -140,7 +140,7 @@ class Report(models.Model):
         if self.status == ReportStatus.INDEFERIDO and not self.denied_reason:
             raise ValidationError({"denied_reason": "Informe o motivo de indeferimento."})
 
-    def __str__(self) -> str:  # pragma: no cover
+    def __str__(self) -> str:
         return self.title
 
     def save(self, *args, **kwargs):
@@ -178,7 +178,7 @@ class ReportTag(models.Model):
     class Meta:
         unique_together = ("report", "tag")
 
-    def __str__(self) -> str:  # pragma: no cover
+    def __str__(self) -> str:
         return f"{self.report_id}-{self.tag_id}"
 
 

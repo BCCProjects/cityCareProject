@@ -15,7 +15,7 @@ class State(models.Model):
     class Meta:
         ordering = ["name"]
 
-    def __str__(self) -> str:  # pragma: no cover - simple representation
+    def __str__(self) -> str:
         return self.name
 
 
@@ -29,7 +29,7 @@ class City(models.Model):
             models.UniqueConstraint(fields=["name", "state"], name="unique_city_per_state"),
         ]
 
-    def __str__(self) -> str:  # pragma: no cover - simple representation
+    def __str__(self) -> str:
         return f"{self.name} - {self.state.abbreviation}"
 
 
@@ -42,7 +42,7 @@ class Organization(models.Model):
     class Meta:
         ordering = ["name"]
 
-    def __str__(self) -> str:  # pragma: no cover - simple representation
+    def __str__(self) -> str:
         return self.name
 
 
@@ -113,7 +113,7 @@ class Employee(AbstractBaseUser, PermissionsMixin):
         full_name = f"{self.first_name} {self.last_name}".strip()
         return full_name
 
-    def __str__(self) -> str:  # pragma: no cover - simple representation
+    def __str__(self) -> str:
         return self.email
 
 
